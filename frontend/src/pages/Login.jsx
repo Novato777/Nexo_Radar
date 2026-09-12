@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Lock, Radar, Loader2 } from 'lucide-react';
+import { API_BASE } from '../config';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('http://127.0.0.1:5000/api/login', { password });
+      const res = await axios.post(`${API_BASE}/api/login`, { password });
       if (res.data.success) {
         localStorage.setItem('nexo_auth', res.data.token);
         navigate('/');

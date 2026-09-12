@@ -7,6 +7,7 @@ import {
   Check, Sparkles, Send, ArrowRight, QrCode, RefreshCw
 } from 'lucide-react';
 import Modal from '../components/Modal';
+import { API_BASE, getLogoUrl } from '../config';
 
 export default function ClientPortal() {
   const { token } = useParams();
@@ -29,7 +30,7 @@ export default function ClientPortal() {
     // Asegurar fondo limpio y neutro para el portal de clientes
     document.documentElement.removeAttribute('data-theme');
     
-    axios.get(`http://127.0.0.1:5000/api/businesses/qr/${token}`)
+    axios.get(`${API_BASE}/api/businesses/qr/${token}`)
       .then(res => {
         setBusiness(res.data);
         setLoading(false);
@@ -53,7 +54,7 @@ export default function ClientPortal() {
     if (e) e.preventDefault();
     setSending(true);
     try {
-      await axios.post('http://127.0.0.1:5000/api/requests', {
+      await axios.post(`${API_BASE}/api/requests`, {
         business_id: business.id,
         type: serviceType,
         message: message.trim() || 'Solicitud de atención prioritaria enviada desde terminal QR'
@@ -456,7 +457,7 @@ export default function ClientPortal() {
             <div style={{ flexShrink: 0 }}>
               {business.logo_url ? (
                 <img 
-                  src={`http://127.0.0.1:5000${business.logo_url}?t=${Date.now()}`} 
+                  src={getLogoUrl(business.logo_url)} 
                   alt={business.business_name} 
                   className="nexo-qr-avatar"
                 />

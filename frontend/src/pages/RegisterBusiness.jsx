@@ -8,6 +8,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import Modal from '../components/Modal';
 import axios from 'axios';
 import L from 'leaflet';
+import { API_BASE } from '../config';
 
 // Icono personalizado para el picker
 const pickerIcon = new L.Icon({
@@ -135,7 +136,7 @@ export default function RegisterBusiness() {
     }
 
     try {
-      await axios.post('http://127.0.0.1:5000/api/businesses', data, {
+      await axios.post(`${API_BASE}/api/businesses`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       navigate('/terminales');

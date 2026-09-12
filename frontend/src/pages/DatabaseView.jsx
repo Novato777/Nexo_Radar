@@ -12,6 +12,7 @@ import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Modal from '../components/Modal';
+import { API_BASE, getLogoUrl } from '../config';
 
 export default function DatabaseView() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function DatabaseView() {
 
   const fetchBusinesses = () => {
     setLoading(true);
-    axios.get('http://127.0.0.1:5000/api/businesses')
+    axios.get(`${API_BASE}/api/businesses`)
       .then(res => {
         setBusinesses(res.data);
         setLoading(false);
@@ -980,7 +981,7 @@ export default function DatabaseView() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           {business.logo_url ? (
                             <img 
-                              src={`http://127.0.0.1:5000${business.logo_url}`} 
+                              src={getLogoUrl(business.logo_url)} 
                               alt="" 
                               style={{ width: '38px', height: '38px', borderRadius: '10px', objectFit: 'cover', background: '#111923', border: '1.5px solid rgba(6, 182, 212, 0.25)' }} 
                             />
@@ -1117,7 +1118,7 @@ export default function DatabaseView() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px' }}>
                     {business.logo_url ? (
                       <img 
-                        src={`http://127.0.0.1:5000${business.logo_url}`} 
+                        src={getLogoUrl(business.logo_url)} 
                         alt="" 
                         style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid rgba(6, 182, 212, 0.3)' }} 
                       />

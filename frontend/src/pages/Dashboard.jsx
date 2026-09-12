@@ -8,6 +8,7 @@ import {
   ChevronRight, Sparkles, X
 } from 'lucide-react';
 import Modal from '../components/Modal';
+import { API_BASE, getLogoUrl } from '../config';
 
 export default function Dashboard() {
   const [businesses, setBusinesses] = useState([]);
@@ -22,7 +23,7 @@ export default function Dashboard() {
   const [businessToDelete, setBusinessToDelete] = useState(null);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:5000/api/businesses')
+    axios.get(`${API_BASE}/api/businesses`)
       .then(res => {
         setBusinesses(res.data);
         setLoading(false);
@@ -41,7 +42,7 @@ export default function Dashboard() {
   const handleDelete = async () => {
     if (!businessToDelete) return;
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/businesses/${businessToDelete.id}`);
+      await axios.delete(`${API_BASE}/api/businesses/${businessToDelete.id}`);
       const updated = businesses.filter(b => b.id !== businessToDelete.id);
       setBusinesses(updated);
       setDeleteModalOpen(false);
@@ -339,7 +340,7 @@ export default function Dashboard() {
                         {previewLogos.map((item, idx) => (
                           <img 
                             key={idx} 
-                            src={`http://127.0.0.1:5000${item.logo_url}`} 
+                            src={getLogoUrl(item.logo_url)} 
                             alt="" 
                             className="avatar-stack-item"
                           />
@@ -465,7 +466,7 @@ export default function Dashboard() {
             {business.logo_url ? (
               <div className="terminal-logo-container" style={{ position: 'relative', width: '62px', height: '62px', flexShrink: 0 }}>
                 <img 
-                  src={`http://127.0.0.1:5000${business.logo_url}`} 
+                  src={getLogoUrl(business.logo_url)} 
                   alt={business.business_name} 
                   style={{ width: '62px', height: '62px', borderRadius: '16px', objectFit: 'cover', border: '2.5px solid rgba(6,182,212,0.4)', boxShadow: '0 6px 18px rgba(0,0,0,0.35)', display: 'block' }} 
                 />

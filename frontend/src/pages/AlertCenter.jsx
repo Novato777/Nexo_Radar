@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import { useSocket } from '../context/SocketContext';
+import { API_BASE, getLogoUrl } from '../config';
 
 export default function AlertCenter() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function AlertCenter() {
 
   const fetchRequests = (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true);
-    axios.get('http://127.0.0.1:5000/api/requests')
+    axios.get(`${API_BASE}/api/requests`)
       .then(response => {
         setRequests(response.data);
         setLoading(false);
@@ -81,7 +82,7 @@ export default function AlertCenter() {
     }
 
     try {
-      await axios.patch(`http://127.0.0.1:5000/api/requests/${id}`, { status: newStatus });
+      await axios.patch(`${API_BASE}/api/requests/${id}`, { status: newStatus });
       // Actualización optimista del estado local
       setRequests(prev => prev.map(req => req.id === id ? { ...req, status: newStatus } : req));
     } catch (err) {
@@ -556,7 +557,7 @@ export default function AlertCenter() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '220px', flex: 1 }}>
                         {req.logo_url ? (
                           <img 
-                            src={`http://127.0.0.1:5000${req.logo_url}`} 
+                            src={getLogoUrl(req.logo_url)} 
                             alt="" 
                             style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}
                           />

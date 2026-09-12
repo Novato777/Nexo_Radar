@@ -8,6 +8,7 @@ import {
   MapPin, ShieldCheck, Clock, CheckCircle2, MessageCircle 
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
+import { API_BASE, getLogoUrl } from '../config';
 
 // --- GENERADOR DE ÍCONO DE MARCADOR DINÁMICO ---
 // El indicador del cliente cambia de color y etiqueta según el estado de la alerta:
@@ -53,7 +54,7 @@ const createCustomIcon = (logoUrl, alertStatus) => {
   }
 
   const htmlContent = logoUrl 
-    ? `<img src="http://127.0.0.1:5000${logoUrl}" style="width: 44px; height: 44px; border-radius: 50%; border: 3.5px solid ${borderColor}; object-fit: cover; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.6);" />` 
+    ? `<img src="${getLogoUrl(logoUrl)}" style="width: 44px; height: 44px; border-radius: 50%; border: 3.5px solid ${borderColor}; object-fit: cover; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.6);" />` 
     : `<div style="background-color: var(--color-surface); width: 44px; height: 44px; border-radius: 50%; border: 3.5px solid ${borderColor}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.6);">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${borderColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>
        </div>`;
@@ -121,7 +122,7 @@ function BusinessMarker({ biz, alertStatus, alert, onUpdateStatus, customMarker,
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px' }}>
             {biz.logo_url ? (
               <img 
-                src={`http://127.0.0.1:5000${biz.logo_url}`} 
+                src={getLogoUrl(biz.logo_url)} 
                 alt={biz.business_name} 
                 style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} 
               />
@@ -376,8 +377,8 @@ export default function RadarMap() {
   const fetchData = async () => {
     try {
       const [bizRes, reqRes] = await Promise.all([
-        axios.get('http://127.0.0.1:5000/api/businesses'),
-        axios.get('http://127.0.0.1:5000/api/requests')
+        axios.get(`${API_BASE}/api/businesses`),
+        axios.get(`${API_BASE}/api/requests`)
       ]);
       
       setBusinesses(bizRes.data);
@@ -455,7 +456,7 @@ export default function RadarMap() {
 
     try {
       // 2. Enviar actualización al backend de SOLO esa alerta
-      await axios.patch(`http://127.0.0.1:5000/api/requests/${alertId}`, { status: newStatus });
+      await axios.patch(`${API_BASE}/api/requests/${alertId}`, { status: newStatus });
     } catch (err) {
       console.error('Error actualizando alerta:', err);
       if (waWindow) waWindow.close();

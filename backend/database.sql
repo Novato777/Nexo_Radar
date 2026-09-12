@@ -25,6 +25,7 @@ CREATE TABLE businesses (
     longitude DECIMAL(11, 8),
     qr_token VARCHAR(50) UNIQUE, -- Token único del código QR (ej. A7F9X2)
     status VARCHAR(50) DEFAULT 'ACTIVO',
+    logo_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

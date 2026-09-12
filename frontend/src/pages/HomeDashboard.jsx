@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Building2, MapPin, BellRing, Activity, Loader2, Zap, ShieldCheck, ArrowUpRight, BarChart3, Globe, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
+import { API_BASE } from '../config';
 
 export default function HomeDashboard() {
   const [businesses, setBusinesses] = useState([]);
@@ -14,8 +15,8 @@ export default function HomeDashboard() {
   const fetchData = async () => {
     try {
       const [bizRes, reqRes] = await Promise.all([
-        axios.get('http://127.0.0.1:5000/api/businesses'),
-        axios.get('http://127.0.0.1:5000/api/requests')
+        axios.get(`${API_BASE}/api/businesses`),
+        axios.get(`${API_BASE}/api/requests`)
       ]);
       setBusinesses(bizRes.data);
       setRequests(reqRes.data);
