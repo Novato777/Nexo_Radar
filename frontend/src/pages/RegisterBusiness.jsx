@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ArrowLeft, QrCode, Save, Loader2, MapPin, Search, 
-  AlertCircle, Building2, User, Phone, Image, UploadCloud, CheckCircle2 
+  AlertCircle, Building2, User, Phone, Image, UploadCloud, CheckCircle2, Navigation 
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import Modal from '../components/Modal';
@@ -45,9 +45,68 @@ export default function RegisterBusiness() {
   const location = useLocation();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [position, setPosition] = useState(null);
-  const [mapCenter, setMapCenter] = useState([4.6097, -74.0817]); // Default Bogotá
+  const [detectingGps, setDetectingGps] = useState(false);
   
+  // Inicializar el centro con la ubicación guardada del dispositivo si existe
+  const [mapCenter, setMapCenter] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nexo_user_location');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.latitude && parsed.longitude) {
+          return [parsed.latitude, parsed.longitude];
+        }
+      }
+    } catch {}
+    return [4.6097, -74.0817]; // Default Bogotá
+  });
+
+  const [position, setPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nexo_user_location');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.latitude && parsed.longitude) {
+          return { lat: parsed.latitude, lng: parsed.longitude };
+        }
+      }
+    } catch {}
+    return null;
+  });
+  
+  // Función para detectar ubicación exacta del operador (PC o Android)
+  const detectCurrentLocation = (autoSetPin = true) => {
+    if (!('geolocation' in navigator)) return;
+    setDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = [pos.coords.latitude, pos.coords.longitude];
+        setMapCenter(coords);
+        if (autoSetPin) {
+          setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        }
+        try {
+          localStorage.setItem('nexo_user_location', JSON.stringify({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            timestamp: Date.now()
+          }));
+        } catch {}
+        setDetectingGps(false);
+      },
+      (err) => {
+        console.debug('Geolocalización no disponible:', err);
+        setDetectingGps(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  };
+
+  // Solicitar permiso de ubicación y fijar posición automáticamente al abrir el registro
+  useEffect(() => {
+    detectCurrentLocation(!position);
+  }, []);
+
   // Estado para Modal de Error
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -293,7 +352,7 @@ export default function RegisterBusiness() {
                 value={formData.phone} 
                 onChange={handleChange} 
                 className="form-input" 
-                placeholder="Ej. 320 611 1216" 
+                placeholder="Ej. 322 206 7870" 
               />
             </div>
 
@@ -372,12 +431,25 @@ export default function RegisterBusiness() {
                 Ubicación Satelital Exacta
               </label>
 
-              {position && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: '700' }}>
-                  <CheckCircle2 size={12} />
-                  Fijado: {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
-                </span>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <button 
+                  type="button" 
+                  onClick={() => detectCurrentLocation(true)}
+                  className="btn-secondary"
+                  style={{ padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: '600', cursor: 'pointer' }}
+                  title="Fijar en mi posición GPS actual"
+                >
+                  <Navigation size={12} color="var(--color-accent)" className={detectingGps ? 'animate-spin' : ''} />
+                  <span>{detectingGps ? 'Localizando...' : 'Mi GPS'}</span>
+                </button>
+
+                {position && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: '700' }}>
+                    <CheckCircle2 size={12} />
+                    Fijado: {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
+                  </span>
+                )}
+              </div>
             </div>
 
             <p style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginBottom: '10px' }}>

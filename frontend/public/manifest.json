@@ -1,0 +1,27 @@
+{
+  "short_name": "NeXo Radar",
+  "name": "NeXo Radar - Telemetría y Monitoreo",
+  "icons": [
+    {
+      "src": "/logo-icon-radar.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/logo-icon-radar.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "64x64 32x32 24x24 16x16"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/"
+}

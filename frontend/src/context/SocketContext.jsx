@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
+import { API_BASE, getLogoUrl } from '../config';
+import { registerServiceWorkerAndSubscribePush, sendTestPush } from '../utils/pushNotifications';
 
 const SocketContext = createContext(null);
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
 
 export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
@@ -41,39 +41,52 @@ export function SocketProvider({ children }) {
     }
   };
 
-  // Solicitar permiso para notificaciones web en PC y móviles
+  // Solicitar permiso para notificaciones y suscribir dispositivo a Web Push
   const requestNotificationPermission = async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      try {
-        await Notification.requestPermission();
-      } catch (err) {
-        console.debug('Error solicitando permisos de notificación:', err);
+    try {
+      if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+        if (Notification.permission === 'granted') {
+          await registerServiceWorkerAndSubscribePush();
+        }
       }
+    } catch (err) {
+      console.debug('Error configurando notificaciones Web Push:', err);
     }
   };
 
-  // Disparar notificación push del sistema operativo (Android y Windows/Mac)
+  // Disparar notificación visual del sistema operativo (Android y Escritorio)
   const triggerPushNotification = (alertData) => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-    const title = `🚨 Alerta en NeXo Radar: ${alertData.business_name || 'Comercio'}`;
+    const title = `🚨 Alerta NeXo: ${alertData.business_name || 'Comercio'}`;
     const options = {
       body: `[${alertData.type || 'Atención'}]: ${alertData.message || 'Señal recibida desde terminal QR'}`,
-      icon: alertData.logo_url ? `${API_BASE}${alertData.logo_url}` : undefined,
-      tag: `nexo-alert-${alertData.id}`,
-      renotify: true
+      icon: alertData.logo_url ? getLogoUrl(alertData.logo_url) : '/logo-icon-radar.png',
+      badge: '/favicon.png',
+      tag: `nexo-alert-${alertData.id || Date.now()}`,
+      renotify: true,
+      data: { url: '/alertas' },
+      vibrate: [300, 150, 300, 150, 500]
     };
 
-    try {
-      const n = new Notification(title, options);
-      n.onclick = () => {
-        window.focus();
-        window.location.href = '/alertas';
-      };
-    } catch (err) {
-      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-        navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
-      }
+    // En Android Chrome, new Notification() en contexto de ventana lanza error. Se debe usar ServiceWorkerRegistration.showNotification()
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready
+        .then(reg => reg.showNotification(title, options))
+        .catch(() => {
+          try {
+            const n = new Notification(title, options);
+            n.onclick = () => { window.focus(); window.location.href = '/alertas'; };
+          } catch {}
+        });
+    } else {
+      try {
+        const n = new Notification(title, options);
+        n.onclick = () => { window.focus(); window.location.href = '/alertas'; };
+      } catch {}
     }
   };
 
@@ -81,7 +94,8 @@ export function SocketProvider({ children }) {
   const checkInitialNewAlerts = React.useCallback(() => {
     axios.get(`${API_BASE}/api/requests`)
       .then(res => {
-        const newOnes = res.data.filter(r => (r.status || '').toUpperCase() === 'NUEVA' || (r.status || '').toUpperCase() === 'PENDIENTE');
+        const list = Array.isArray(res.data) ? res.data : [];
+        const newOnes = list.filter(r => (r.status || '').toUpperCase() === 'NUEVA' || (r.status || '').toUpperCase() === 'PENDIENTE');
         if (newOnes.length > 0) {
           setHasNewAlerts(true);
           setNewAlertsCount(newOnes.length);
@@ -146,7 +160,9 @@ export function SocketProvider({ children }) {
       newAlertsCount, 
       clearNewAlertsDot, 
       latestAlert,
-      requestNotificationPermission 
+      requestNotificationPermission,
+      subscribeToPushNotifications: registerServiceWorkerAndSubscribePush,
+      sendTestPush
     }}>
       {children}
     </SocketContext.Provider>

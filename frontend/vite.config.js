@@ -5,7 +5,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5175,
-    strictPort: true
+    port: 5173,
+    strictPort: false
   }
 })

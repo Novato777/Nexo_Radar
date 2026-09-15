@@ -18,10 +18,12 @@ export default function HomeDashboard() {
         axios.get(`${API_BASE}/api/businesses`),
         axios.get(`${API_BASE}/api/requests`)
       ]);
-      setBusinesses(bizRes.data);
-      setRequests(reqRes.data);
+      setBusinesses(Array.isArray(bizRes.data) ? bizRes.data : []);
+      setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
     } catch (err) {
       console.error('Error cargando métricas:', err);
+      setBusinesses([]);
+      setRequests([]);
     } finally {
       setLoading(false);
     }
@@ -36,11 +38,17 @@ export default function HomeDashboard() {
     if (!socket) return;
 
     const handleNewRequest = (newReq) => {
-      setRequests(prev => [newReq, ...prev.filter(r => r.id !== newReq.id)]);
+      setRequests(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return [newReq, ...arr.filter(r => r.id !== newReq.id)];
+      });
     };
 
     const handleRequestUpdated = (updatedReq) => {
-      setRequests(prev => prev.map(r => r.id === updatedReq.id ? { ...r, ...updatedReq } : r));
+      setRequests(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return arr.map(r => r.id === updatedReq.id ? { ...r, ...updatedReq } : r);
+      });
     };
 
     const handleBusinessChanged = () => {
@@ -236,7 +244,15 @@ export default function HomeDashboard() {
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, boxShadow: `0 0 8px ${dotColor}`, flexShrink: 0 }}></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ margin: '0 0 2px 0', fontSize: '0.88rem', fontWeight: '600', color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.business_name}</p>
-                      <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-text-secondary)' }}>{req.type} · <span style={{ color: dotColor, fontWeight: '700' }}>{s}</span></p>
+                      <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--color-text-secondary)' }}>
+                        {req.type} · <span style={{ color: dotColor, fontWeight: '700' }}>
+                          {isInProg 
+                            ? `EN REVISIÓN ${req.attended_by ? `(${req.attended_by})` : ''}` 
+                            : s === 'RESUELTA' 
+                              ? `COMPLETADO ${req.resolved_by || req.attended_by ? `(${req.resolved_by || req.attended_by})` : ''}` 
+                              : s}
+                        </span>
+                      </p>
                     </div>
                     <ChevronRight size={16} color="var(--color-text-secondary)" />
                   </div>

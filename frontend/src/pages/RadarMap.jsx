@@ -5,10 +5,10 @@ import L from 'leaflet';
 import axios from 'axios';
 import { 
   ArrowLeft, Loader2, AlertCircle, Search, Building2, 
-  MapPin, ShieldCheck, Clock, CheckCircle2, MessageCircle 
+  MapPin, ShieldCheck, Clock, CheckCircle2, MessageCircle, Navigation 
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
-import { API_BASE, getLogoUrl } from '../config';
+import { API_BASE, getLogoUrl, buildWhatsAppUrl, getResolvedWhatsAppMessage } from '../config';
 
 // --- GENERADOR DE ÍCONO DE MARCADOR DINÁMICO ---
 // El indicador del cliente cambia de color y etiqueta según el estado de la alerta:
@@ -16,7 +16,7 @@ import { API_BASE, getLogoUrl } from '../config';
 // 🟡 EN PROCESO: Borde amarillo, punto ámbar y etiqueta 'REVISIÓN'
 // 🟢 RESUELTA: Borde verde, punto verde y etiqueta 'RESUELTO'
 // 🔷 NORMAL: Borde cyan, punto verde y etiqueta 'SEGURO'
-const createCustomIcon = (logoUrl, alertStatus) => {
+const createCustomIcon = (logoUrl, alertStatus, attendedBy) => {
   let borderColor = '#10b981';
   let badgeColor = '#10b981';
   let pulseClass = '';
@@ -35,7 +35,8 @@ const createCustomIcon = (logoUrl, alertStatus) => {
     borderColor = '#f59e0b';
     badgeColor = '#f59e0b';
     pulseClass = 'pulse-animation-amber';
-    statusTag = 'REVISIÓN';
+    const collaboratorFirstName = attendedBy ? attendedBy.trim().split(' ')[0] : '';
+    statusTag = collaboratorFirstName ? `REVISIÓN (${collaboratorFirstName})` : 'REVISIÓN';
     tagBg = '#f59e0b';
     tagColor = '#020617';
   } else if (alertStatus === 'RESUELTA') {
@@ -77,6 +78,21 @@ const createCustomIcon = (logoUrl, alertStatus) => {
   });
 };
 
+// Generador de ícono pulsante para la ubicación del usuario (GPS en vivo)
+const createUserLocationIcon = () => {
+  return new L.divIcon({
+    html: `
+      <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; width: 38px; height: 38px; border-radius: 50%; background: rgba(6, 182, 212, 0.4); animation: userLocationPulse 1.8s infinite ease-out;"></div>
+        <div style="width: 14px; height: 14px; border-radius: 50%; background: #06b6d4; border: 2.5px solid #ffffff; box-shadow: 0 0 10px #06b6d4; z-index: 10;"></div>
+      </div>
+    `,
+    className: 'user-gps-marker',
+    iconSize: [38, 38],
+    iconAnchor: [19, 19]
+  });
+};
+
 // Componente para volar la cámara programáticamente
 function MapFlyTo({ center }) {
   const map = useMap();
@@ -104,10 +120,8 @@ function BusinessMarker({ biz, alertStatus, alert, onUpdateStatus, customMarker,
   const isResolved = alertStatus === 'RESUELTA';
 
   // Enlace y mensaje pre-escrito de agradecimiento y cortesía por WhatsApp
-  const cleanPhone = biz.phone ? biz.phone.replace(/[^0-9]/g, '') : '';
-  const formattedPhone = cleanPhone.startsWith('57') ? cleanPhone : `57${cleanPhone}`;
-  const thankYouMsg = `Hola *${biz.business_name || 'Comercio'}* 👋 Muchas gracias por preferirnos, agradecemos tu confianza. Tu solicitud de atención ha sido completada y marcada como *RESUELTA* con éxito. Si necesitas algo más (soporte técnico, asistencia en tu terminal o nuevas consultas), no dudes en escribirnos. ¡Con aprecio, el equipo de NeXo Radar! 🚀`;
-  const waUrl = cleanPhone ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(thankYouMsg)}` : null;
+  const thankYouMsg = getResolvedWhatsAppMessage(biz.business_name);
+  const waUrl = buildWhatsAppUrl(biz.phone, thankYouMsg);
 
   return (
     <Marker 
@@ -196,11 +210,16 @@ function BusinessMarker({ biz, alertStatus, alert, onUpdateStatus, customMarker,
                 </span>
                 
                 <span style={{ 
-                  fontSize: '0.68rem', padding: '2px 8px', borderRadius: '10px', fontWeight: '800',
+                  fontSize: '0.68rem', padding: '3px 8px', borderRadius: '10px', fontWeight: '800',
                   background: isNew ? '#ef4444' : isInProgress ? '#f59e0b' : '#10b981',
-                  color: isNew ? '#fff' : '#0f172a'
+                  color: isNew ? '#fff' : '#0f172a',
+                  textTransform: 'uppercase'
                 }}>
-                  {alert.status}
+                  {isInProgress 
+                    ? `En revisión ${alert.attended_by ? `por ${alert.attended_by}` : ''}`
+                    : isResolved
+                      ? `Completado ${alert.resolved_by || alert.attended_by ? `por ${alert.resolved_by || alert.attended_by}` : ''}`
+                      : 'Nueva'}
                 </span>
               </div>
               
@@ -229,7 +248,7 @@ function BusinessMarker({ biz, alertStatus, alert, onUpdateStatus, customMarker,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#10b981', fontWeight: '800', fontSize: '0.82rem', textTransform: 'uppercase' }}>
                     <CheckCircle2 size={15} />
-                    <span>Ciclo Cerrado · Alerta Resuelta</span>
+                    <span>Ciclo Cerrado · Completado {alert.resolved_by || alert.attended_by ? `por ${alert.resolved_by || alert.attended_by}` : ''}</span>
                   </div>
                   <p style={{ margin: '4px 0 8px 0', fontSize: '0.74rem', color: 'var(--color-text-secondary)', lineHeight: 1.3 }}>
                     Esta alerta fue completada y su ciclo se ha cerrado.
@@ -265,6 +284,11 @@ function BusinessMarker({ biz, alertStatus, alert, onUpdateStatus, customMarker,
                 </div>
               ) : isInProgress ? (
                 <div style={{ marginTop: '6px' }}>
+                  {alert.attended_by && (
+                    <div style={{ fontSize: '0.74rem', color: '#f59e0b', fontWeight: '700', marginBottom: '6px', textAlign: 'center', background: 'rgba(245, 158, 11, 0.1)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                      Atendido actualmente por: <strong>{alert.attended_by}</strong>
+                    </div>
+                  )}
                   <button
                     onClick={() => alert && onUpdateStatus(alert.id, biz.id, 'RESUELTA')}
                     disabled={isUpdating}
@@ -366,8 +390,60 @@ export default function RadarMap() {
   const [businesses, setBusinesses] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mapCenter, setMapCenter] = useState([4.6097, -74.0817]); // Default Bogotá
+  const [mapCenter, setMapCenter] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nexo_user_location');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.latitude && parsed.longitude) {
+          return [parsed.latitude, parsed.longitude];
+        }
+      }
+    } catch {}
+    return [4.6097, -74.0817]; // Default Bogotá
+  });
+  const [userLocation, setUserLocation] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nexo_user_location');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.latitude && parsed.longitude) {
+          return [parsed.latitude, parsed.longitude];
+        }
+      }
+    } catch {}
+    return null;
+  });
+  const [isLocating, setIsLocating] = useState(false);
   const [updatingBusinessId, setUpdatingBusinessId] = useState(null);
+
+  // Solicitar permiso de ubicación y centrar el radar automáticamente en la posición del usuario
+  const locateUser = (animate = true) => {
+    if (!('geolocation' in navigator)) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = [pos.coords.latitude, pos.coords.longitude];
+        setUserLocation(coords);
+        if (animate) {
+          setMapCenter(coords);
+        }
+        try {
+          localStorage.setItem('nexo_user_location', JSON.stringify({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            timestamp: Date.now()
+          }));
+        } catch {}
+        setIsLocating(false);
+      },
+      (err) => {
+        console.debug('Geolocalización denegada o no disponible:', err);
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  };
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -381,21 +457,26 @@ export default function RadarMap() {
         axios.get(`${API_BASE}/api/requests`)
       ]);
       
-      setBusinesses(bizRes.data);
-      setRequests(reqRes.data);
+      const safeBiz = Array.isArray(bizRes.data) ? bizRes.data : [];
+      const safeReq = Array.isArray(reqRes.data) ? reqRes.data : [];
+
+      setBusinesses(safeBiz);
+      setRequests(safeReq);
       setLoading(false);
 
       // Revisar si venimos de un click en AlertCenter o Dashboard
       const params = new URLSearchParams(location.search);
       const focusId = params.get('focus');
       if (focusId) {
-        const bizToFocus = bizRes.data.find(b => b.id === focusId);
+        const bizToFocus = safeBiz.find(b => b.id === focusId);
         if (bizToFocus && bizToFocus.latitude && bizToFocus.longitude) {
           setMapCenter([parseFloat(bizToFocus.latitude), parseFloat(bizToFocus.longitude)]);
         }
       }
     } catch (error) {
       console.error('Error fetching map data:', error);
+      setBusinesses([]);
+      setRequests([]);
       setLoading(false);
     }
   };
@@ -406,16 +487,30 @@ export default function RadarMap() {
     return () => clearInterval(interval);
   }, [location.search]);
 
+  useEffect(() => {
+    // Si no venimos de un focus específico por URL, pedir ubicación y centrar allí automáticamente
+    const params = new URLSearchParams(location.search);
+    if (!params.get('focus')) {
+      locateUser(true);
+    }
+  }, [location.search]);
+
   // Sincronización en tiempo real vía Socket.IO
   useEffect(() => {
     if (!socket) return;
 
     const handleNewRequest = (newReq) => {
-      setRequests(prev => [newReq, ...prev.filter(r => r.id !== newReq.id)]);
+      setRequests(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return [newReq, ...arr.filter(r => r.id !== newReq.id)];
+      });
     };
 
     const handleRequestUpdated = (updatedReq) => {
-      setRequests(prev => prev.map(r => r.id === updatedReq.id ? { ...r, ...updatedReq } : r));
+      setRequests(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return arr.map(r => r.id === updatedReq.id ? { ...r, ...updatedReq } : r);
+      });
     };
 
     const handleBusinessChanged = () => {
@@ -438,25 +533,43 @@ export default function RadarMap() {
     if (!alertId) return;
     setUpdatingBusinessId(businessId);
 
+    const currentUserName = (() => {
+      try {
+        const u = JSON.parse(localStorage.getItem('nexo_user'));
+        return u?.name || 'Colaborador';
+      } catch {
+        return 'Colaborador';
+      }
+    })();
+
     // Si la alerta es RESUELTA, abrir de inmediato WhatsApp sincrónicamente para que el navegador no bloquee la pestaña
     let waWindow = null;
     if (newStatus === 'RESUELTA') {
       const targetBiz = businesses.find(b => b.id === businessId);
       if (targetBiz && targetBiz.phone) {
-        const cleanPhone = targetBiz.phone.replace(/[^0-9]/g, '');
-        const formattedPhone = cleanPhone.startsWith('57') ? cleanPhone : `57${cleanPhone}`;
-        const msg = `Hola *${targetBiz.business_name || 'Comercio'}* 👋 Muchas gracias por preferirnos, agradecemos tu confianza. Tu requerimiento ha sido atendido y marcado como *RESUELTO* con éxito. Si necesitas algo más (soporte técnico, asistencia en tu terminal o nuevas consultas), no dudes en escribirnos. ¡Con aprecio, el equipo de NeXo Radar! 🚀`;
-        const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
-        waWindow = window.open(waUrl, '_blank');
+        const msg = getResolvedWhatsAppMessage(targetBiz.business_name);
+        const waUrl = buildWhatsAppUrl(targetBiz.phone, msg);
+        if (waUrl) {
+          waWindow = window.open(waUrl, '_blank');
+        }
       }
     }
 
     // 1. Actualización optimista de EXCLUSIVAMENTE la alerta seleccionada en el estado local
-    setRequests(prev => prev.map(r => r.id === alertId ? { ...r, status: newStatus } : r));
+    setRequests(prev => prev.map(r => r.id === alertId ? { 
+      ...r, 
+      status: newStatus,
+      attended_by: newStatus === 'EN PROCESO' ? (r.attended_by || currentUserName) : r.attended_by,
+      resolved_by: newStatus === 'RESUELTA' ? currentUserName : r.resolved_by
+    } : r));
 
     try {
-      // 2. Enviar actualización al backend de SOLO esa alerta
-      await axios.patch(`${API_BASE}/api/requests/${alertId}`, { status: newStatus });
+      // 2. Enviar actualización al backend con el colaborador asignado
+      await axios.patch(`${API_BASE}/api/requests/${alertId}`, { 
+        status: newStatus,
+        attended_by: newStatus === 'EN PROCESO' ? currentUserName : undefined,
+        resolved_by: newStatus === 'RESUELTA' ? currentUserName : undefined
+      });
     } catch (err) {
       console.error('Error actualizando alerta:', err);
       if (waWindow) waWindow.close();
@@ -723,11 +836,47 @@ export default function RadarMap() {
             70% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(245, 158, 11, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
           }
+
+          @keyframes userLocationPulse {
+            0% { transform: scale(0.6); opacity: 1; }
+            100% { transform: scale(2.4); opacity: 0; }
+          }
         `}
       </style>
 
       {/* MAPA */}
       <div style={{ flex: 1, position: 'relative' }}>
+        {/* Botón Flotante de GPS para centrar en la ubicación del dispositivo */}
+        <button
+          onClick={() => locateUser(true)}
+          title="Centrar en mi ubicación actual"
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 400,
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(6, 182, 212, 0.35)',
+            color: '#f8fafc',
+            borderRadius: '10px',
+            padding: '8px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '0.82rem',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={e => e.currentTarget.style.borderColor = '#06b6d4'}
+          onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.35)'}
+        >
+          <Navigation size={15} color="var(--color-accent)" className={isLocating ? 'animate-spin' : ''} />
+          <span>Mi Ubicación</span>
+        </button>
+
         <MapContainer
           center={mapCenter}
           zoom={6}
@@ -750,12 +899,28 @@ export default function RadarMap() {
             maxZoom={21}
           />
           <MapFlyTo center={mapCenter} />
+
+          {/* Marcador de Ubicación del Usuario / Dispositivo */}
+          {userLocation && (
+            <Marker position={userLocation} icon={createUserLocationIcon()}>
+              <Popup>
+                <div style={{ textAlign: 'center', padding: '6px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#06b6d4', fontWeight: '800', fontSize: '0.85rem' }}>
+                    <Navigation size={14} /> Tu Ubicación en Vivo
+                  </div>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                    Dispositivo conectado al radar
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+          )}
           
           {businesses.map(biz => {
             if (!biz.latitude || !biz.longitude) return null;
             
             const { status: alertStatus, alert } = getBusinessAlertState(biz.id);
-            const customMarker = createCustomIcon(biz.logo_url, alertStatus);
+            const customMarker = createCustomIcon(biz.logo_url, alertStatus, alert?.attended_by);
             
             return (
               <BusinessMarker

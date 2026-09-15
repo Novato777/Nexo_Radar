@@ -7,7 +7,7 @@ import {
   Check, Sparkles, Send, ArrowRight, QrCode, RefreshCw
 } from 'lucide-react';
 import Modal from '../components/Modal';
-import { API_BASE, getLogoUrl } from '../config';
+import { API_BASE, getLogoUrl, buildWhatsAppUrl } from '../config';
 
 export default function ClientPortal() {
   const { token } = useParams();
@@ -68,8 +68,9 @@ export default function ClientPortal() {
     }
   };
 
-  const cleanPhone = business?.phone ? business.phone.replace(/[^0-9]/g, '') : '';
-  const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('57') ? cleanPhone : '57' + cleanPhone}?text=${encodeURIComponent(`Hola *${business?.business_name || 'Establecimiento'}* 👋 Me comunico a través del portal de atención NeXo Radar.`)}` : null;
+  const waLink = business?.phone 
+    ? buildWhatsAppUrl(business.phone, `¡Hola *${business?.business_name || 'Establecimiento'}*! 👋✨\n\nMe comunico a través del portal de atención NeXo Radar. 🛡️`)
+    : null;
 
   const serviceOptions = [
     { 
@@ -208,7 +209,7 @@ export default function ClientPortal() {
             </button>
 
             <a
-              href={`https://wa.me/573222067870?text=${encodeURIComponent(`Hola NeXo Radar, tengo en mis manos la tarjeta física con Token #${token} y requiero asistencia para su activación.`)}`}
+              href={buildWhatsAppUrl('573222067870', `¡Hola NeXo Radar! 👋✨\n\nTengo en mis manos la tarjeta física con Token #${token} y requiero asistencia para su activación. 🚀`)}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -856,7 +857,7 @@ export default function ClientPortal() {
             Red de Monitoreo y Asistencia Inteligente
           </p>
           <p style={{ margin: 0, fontSize: '0.72rem', color: '#475569' }}>
-            Desarrollado por NeXo Software Solutions
+            Desarrollado por <strong style={{ color: '#64748b' }}>NeXo</strong> · by Brayan Cardozo
           </p>
         </footer>
 

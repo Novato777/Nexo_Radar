@@ -79,26 +79,27 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const authRoutes = require('./routes/auth');
 const businessRoutes = require('./routes/businesses');
 const requestRoutes = require('./routes/requests');
+const userRoutes = require('./routes/users');
+const pushRoutes = require('./routes/push');
+const migrateUsers = require('./migrate-users');
+
+// Ejecutar migración de usuarios al iniciar el servidor
+migrateUsers().catch(e => console.warn('[Auto-Migrate users warning]:', e.message));
 
 // Use Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/businesses', businessRoutes);
 app.use('/api/requests', requestRoutes);
+app.use('/api/push', pushRoutes);
 
 // Test route
 app.get('/api', (req, res) => {
   res.json({ message: 'NeXo Radar API v1 - Protegida y en Tiempo Real' });
 });
 
-// Login con Master Password protegido por Rate Limit
-app.post('/api/login', authLimiter, (req, res) => {
-  const { password } = req.body;
-  if (password && password === process.env.MASTER_PASSWORD) {
-    res.json({ success: true, token: 'nexo-auth-token-123' });
-  } else {
-    res.status(401).json({ success: false, message: 'Contraseña incorrecta' });
-  }
-});
+// Endpoint de login compatible con frontend directo (/api/login y /api/auth/login)
+app.post('/api/login', authLimiter, authRoutes.handleLogin);
 
 app.get('/api/status', (req, res) => {
   res.json({ 

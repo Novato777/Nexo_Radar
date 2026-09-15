@@ -55,8 +55,8 @@ export default function Layout({ children }) {
 
           @media (max-width: 768px) {
             .layout-main {
-              /* Añadir padding bottom equivalente al alto del Navbar en móvil para páginas con scroll */
-              padding-bottom: 75px; 
+              /* Añadir padding bottom con safe area para botones de navegación de Android */
+              padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); 
             }
 
             .layout-container.layout-map-mode {
@@ -65,8 +65,8 @@ export default function Layout({ children }) {
               overflow: hidden !important;
             }
             .layout-main.layout-main-map {
-              height: calc(100dvh - 65px) !important;
-              max-height: calc(100dvh - 65px) !important;
+              height: calc(100dvh - 65px - env(safe-area-inset-bottom, 0px)) !important;
+              max-height: calc(100dvh - 65px - env(safe-area-inset-bottom, 0px)) !important;
               padding-bottom: 0 !important;
               overflow: hidden !important;
             }

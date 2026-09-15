@@ -2,27 +2,30 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const multer = require('multer');
-const path = require('path');
+const { uploadImage } = require('../config/cloudinary');
 
-// Configuración de multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+// Multer en memoria para procesar buffers directamente y subirlos a Cloudinary
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // Límite de 10MB
 });
-const upload = multer({ storage: storage });
 
 // POST /api/businesses
-// Comercial registra un nuevo negocio con su QR y foto
+// Comercial/Colaborador registra un nuevo negocio con su QR y foto
 router.post('/', upload.single('logo'), async (req, res) => {
   const { business_name, owner_name, phone, city, address, latitude, longitude, qr_token } = req.body;
-  const logo_url = req.file ? `/uploads/${req.file.filename}` : null;
   
   try {
+    let logo_url = null;
+    if (req.file && req.file.buffer) {
+      try {
+        logo_url = await uploadImage(req.file.buffer, req.file.originalname, 'nexo_radar/logos');
+      } catch (uploadErr) {
+        console.error('[Error subiendo logo a Cloudinary]:', uploadErr);
+        // Continuar el registro aunque la imagen falle para no bloquear la operación
+      }
+    }
+    
     const result = await db.query(
       `INSERT INTO businesses 
       (business_name, owner_name, phone, city, address, latitude, longitude, qr_token, logo_url) 

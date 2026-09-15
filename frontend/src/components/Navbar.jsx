@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Map, BellRing, LogOut, ShieldCheck, 
-  Server, Sun, Moon, Database 
+  Server, Sun, Moon, Database, Users, Shield 
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 
@@ -14,6 +14,21 @@ export default function Navbar() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('nexo_theme') || 'dark';
   });
+
+  const currentUser = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('nexo_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const isAdmin = useMemo(() => {
+    if (!currentUser) return true; // Si no hay usuario en cache, permitir por defecto
+    const role = (currentUser.role || '').toLowerCase();
+    return role === 'admin' || role === 'superadmin';
+  }, [currentUser]);
 
   useEffect(() => {
     if (theme === 'light') {
@@ -38,6 +53,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem('nexo_auth');
+    localStorage.removeItem('nexo_user');
     navigate('/login');
   };
 
@@ -51,11 +67,6 @@ export default function Navbar() {
       }
       navigate(path);
     };
-
-    const isTouchOrAndroid = typeof window !== 'undefined' && (
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator?.userAgent || '') ||
-      window.innerWidth <= 860
-    );
 
     return (
       <button 
@@ -95,7 +106,7 @@ export default function Navbar() {
     <>
       <div className="navbar-container">
         {/* Brand */}
-        <div className="navbar-brand" onClick={() => navigate('/')}>
+        <div className="navbar-brand" onClick={() => navigate('/dashboard')}>
           <img 
             src={theme === 'dark' ? '/logo-nexo-radar-dark.png' : '/logo-nexo-radar.png'} 
             alt="NeXo Radar" 
@@ -105,11 +116,12 @@ export default function Navbar() {
 
         {/* Navigation Links (Módulos Principales) */}
         <div className="navbar-links">
-          <NavItem path="/" icon={LayoutDashboard} label="Dashboard" />
+          <NavItem path="/dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem path="/terminales" icon={Server} label="Terminales" />
           <NavItem path="/mapa" icon={Map} label="Mapa" />
           <NavItem path="/alertas" icon={BellRing} label="Alertas" />
-          <NavItem path="/base-de-datos" icon={Database} label="Base de Datos" mobileLabel="DB" />
+          {isAdmin && <NavItem path="/base-de-datos" icon={Database} label="Base de Datos" mobileLabel="DB" />}
+          {isAdmin && <NavItem path="/colaboradores" icon={Users} label="Colaboradores" mobileLabel="Equipo" />}
         </div>
 
         {/* Barra sutil separadora entre los módulos y los botones de funcionalidad */}
@@ -117,6 +129,29 @@ export default function Navbar() {
 
         {/* User Actions: Modo Oscuro/Claro al lado del botón de Salir */}
         <div className="navbar-actions">
+          
+          {/* Insignia de Usuario Actual en Escritorio */}
+          {currentUser && (
+            <div className="user-badge-desktop" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              background: isAdmin ? 'rgba(245, 158, 11, 0.1)' : 'rgba(6, 182, 212, 0.1)',
+              border: `1px solid ${isAdmin ? 'rgba(245, 158, 11, 0.25)' : 'rgba(6, 182, 212, 0.25)'}`,
+              fontSize: '0.78rem',
+              color: isAdmin ? '#f59e0b' : 'var(--color-accent)',
+              fontWeight: '600',
+              marginRight: '6px'
+            }}>
+              {isAdmin ? <Shield size={13} /> : <Users size={13} />}
+              <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {currentUser.name || 'Usuario'}
+              </span>
+            </div>
+          )}
+
           <button 
             className="theme-toggle-btn"
             onClick={toggleTheme}
@@ -284,7 +319,7 @@ export default function Navbar() {
             display: inline-block;
           }
 
-          /* Mobile / Bottom Tab Bar con espaciado equitativo y alineación perfecta */
+          /* Mobile / Bottom Tab Bar con espaciado equitativo y soporte de safe area en Android */
           @media (max-width: 768px) {
             .navbar-container {
               position: fixed;
@@ -292,8 +327,8 @@ export default function Navbar() {
               top: auto;
               left: 0;
               right: 0;
-              height: 65px;
-              padding: 0 6px;
+              height: calc(65px + env(safe-area-inset-bottom, 0px));
+              padding: 0 6px env(safe-area-inset-bottom, 0px) 6px;
               border-bottom: none;
               border-top: 1px solid rgba(255,255,255,0.08);
               box-shadow: 0 -4px 14px rgba(0,0,0,0.25);
@@ -303,28 +338,40 @@ export default function Navbar() {
               box-sizing: border-box;
             }
             
-            .navbar-brand {
+            .navbar-brand, .user-badge-desktop {
               display: none !important;
             }
             
-            /* 5 partes iguales para los 5 módulos */
+            /* Contenedor de Módulos con scroll táctil invisible limitado hasta la barra divisoria */
             .navbar-links {
               display: flex;
               align-items: center;
-              flex: 5;
-              gap: 0;
+              flex: 1;
+              min-width: 0;
+              gap: 6px;
               height: 100%;
               margin: 0;
-              padding: 0;
+              padding: 0 4px;
+              overflow-x: auto;
+              overflow-y: hidden;
+              -webkit-overflow-scrolling: touch;
+              scrollbar-width: none; /* Firefox invisible */
+              -ms-overflow-style: none; /* IE/Edge */
             }
 
-            /* Barra sutil divisoria entre módulos y botones de funcionalidad */
+            .navbar-links::-webkit-scrollbar {
+              display: none !important; /* Chrome, Safari, Android WebView */
+              width: 0 !important;
+              height: 0 !important;
+            }
+
+            /* Barra sutil divisoria fija entre módulos y botones de funcionalidad */
             .navbar-divider {
               display: block;
               width: 1px;
               height: 28px;
               background: rgba(255, 255, 255, 0.16);
-              margin: 0 5px;
+              margin: 0 6px;
               flex-shrink: 0;
               border-radius: 1px;
               align-self: center;
@@ -334,33 +381,56 @@ export default function Navbar() {
               background: rgba(0, 0, 0, 0.14);
             }
             
-            /* 2 partes iguales para los 2 botones de acción */
+            /* Botones de acción fijos a la derecha (Claro/Oscuro y Salir) */
             .navbar-actions {
               display: flex;
               align-items: center;
-              flex: 2;
-              gap: 0;
+              flex-shrink: 0;
+              gap: 4px;
               height: 100%;
               margin: 0;
               padding: 0;
             }
             
-            /* Todos los botones con exactamente el mismo ancho, altura y alineación */
-            .nav-item-btn, .logout-btn, .theme-toggle-btn {
-              flex: 1 1 0px !important;
-              width: 0 !important;
-              min-width: 0 !important;
+            /* Botones de módulos con separación cómoda para evitar que se amontonen */
+            .navbar-links .nav-item-btn {
+              flex: 0 0 auto !important;
+              min-width: 66px !important;
+              width: auto !important;
               height: 52px !important;
               display: flex !important;
               flex-direction: column !important;
               align-items: center !important;
               justify-content: center !important;
-              padding: 4px 2px !important;
+              padding: 4px 8px !important;
               gap: 3px !important;
               border-radius: 10px !important;
               background: transparent !important;
               border: 1px solid transparent !important;
               box-sizing: border-box;
+              touch-action: manipulation;
+              -webkit-tap-highlight-color: transparent;
+            }
+
+            /* Botones de acción (Salir y Tema) */
+            .navbar-actions .logout-btn, 
+            .navbar-actions .theme-toggle-btn {
+              flex: 0 0 auto !important;
+              min-width: 52px !important;
+              width: auto !important;
+              height: 52px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              justify-content: center !important;
+              padding: 4px 6px !important;
+              gap: 3px !important;
+              border-radius: 10px !important;
+              background: transparent !important;
+              border: 1px solid transparent !important;
+              box-sizing: border-box;
+              touch-action: manipulation;
+              -webkit-tap-highlight-color: transparent;
             }
 
             .nav-item-btn.active {
@@ -370,7 +440,7 @@ export default function Navbar() {
             }
             
             .nav-label {
-              font-size: 0.65rem !important;
+              font-size: 0.68rem !important;
               font-weight: 600;
               white-space: nowrap;
               letter-spacing: -0.01em;

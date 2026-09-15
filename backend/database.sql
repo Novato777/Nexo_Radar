@@ -3,13 +3,13 @@
 -- Extensión para IDs únicos (opcional pero recomendado)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Tabla de Usuarios (Comerciales y Admins de NeXo)
+-- 1. Tabla de Usuarios (Colaboradores y Admins de NeXo)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) DEFAULT 'comercial', -- 'comercial' o 'admin'
+    role VARCHAR(50) DEFAULT 'colaborador', -- 'colaborador', 'admin', 'superadmin'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -39,7 +39,9 @@ CREATE TABLE service_requests (
     status VARCHAR(50) DEFAULT 'NUEVA', -- 'NUEVA', 'VISTA', 'CERRADA'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     viewed_at TIMESTAMP WITH TIME ZONE,
-    resolved_at TIMESTAMP WITH TIME ZONE
+    resolved_at TIMESTAMP WITH TIME ZONE,
+    attended_by VARCHAR(150), -- Colaborador que toma la solicitud en revisión
+    resolved_by VARCHAR(150)  -- Colaborador que completa y cierra la solicitud
 );
 
 -- Opcional: Insertar un usuario admin de prueba (La contraseña hasheada aquí es solo un placeholder)

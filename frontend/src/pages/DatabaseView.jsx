@@ -12,7 +12,7 @@ import QRCode from 'qrcode';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Modal from '../components/Modal';
-import { API_BASE, getLogoUrl } from '../config';
+import { API_BASE, getLogoUrl, buildWhatsAppUrl } from '../config';
 
 export default function DatabaseView() {
   const navigate = useNavigate();
@@ -51,11 +51,12 @@ export default function DatabaseView() {
     setLoading(true);
     axios.get(`${API_BASE}/api/businesses`)
       .then(res => {
-        setBusinesses(res.data);
+        setBusinesses(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error cargando base de datos:', err);
+        setBusinesses([]);
         setLoading(false);
       });
   };
@@ -64,11 +65,13 @@ export default function DatabaseView() {
     fetchBusinesses();
   }, []);
 
+  const safeBusinesses = Array.isArray(businesses) ? businesses : [];
+
   // Lista de ciudades únicas para filtro
-  const cities = ['ALL', ...Array.from(new Set(businesses.map(b => b.city).filter(Boolean)))];
+  const cities = ['ALL', ...Array.from(new Set(safeBusinesses.map(b => b.city).filter(Boolean)))];
 
   // Filtrado reactivo
-  const filteredData = businesses.filter(b => {
+  const filteredData = safeBusinesses.filter(b => {
     const matchesCity = selectedCity === 'ALL' || b.city === selectedCity;
     if (!matchesCity) return false;
 
@@ -961,10 +964,9 @@ export default function DatabaseView() {
                 </tr>
               ) : (
                 filteredData.map(business => {
+                  const waText = `¡Hola *${business.business_name}*! 👋✨\n\nTe contactamos desde la central operativa de *NeXo Radar* (Terminal #[${business.qr_token || '---'}]). 🛡️\n\n¿En qué podemos colaborarte en este momento? 💬`;
+                  const waUrl = buildWhatsAppUrl(business.phone, waText);
                   const isCopied = copiedToken === business.qr_token;
-                  const cleanPhone = business.phone ? business.phone.replace(/[^0-9]/g, '') : '';
-                  const waText = encodeURIComponent(`Hola *${business.business_name}* 👋 Te contactamos desde la central operativa de *NeXo Radar* (Terminal #[${business.qr_token || '---'}]). ¿En qué podemos colaborarte hoy? 🛡️`);
-                  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('57') ? cleanPhone : '57' + cleanPhone}?text=${waText}` : null;
 
                   return (
                     <tr 
@@ -1107,9 +1109,9 @@ export default function DatabaseView() {
           </div>
         ) : (
           filteredData.map(business => {
+            const waText = `¡Hola *${business.business_name}*! 👋✨\n\nTe contactamos desde la central operativa de *NeXo Radar* (Terminal #[${business.qr_token || '---'}]). 🛡️\n\n¿En qué podemos colaborarte en este momento? 💬`;
+            const waUrl = buildWhatsAppUrl(business.phone, waText);
             const isCopied = copiedToken === business.qr_token;
-            const cleanPhone = business.phone ? business.phone.replace(/[^0-9]/g, '') : '';
-            const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('57') ? cleanPhone : '57' + cleanPhone}` : null;
 
             return (
               <div key={business.id} className="db-mobile-card">

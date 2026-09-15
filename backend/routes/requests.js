@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { sendPushNotificationToAll } = require('../config/webpush');
 
 // POST /api/requests
 // Cliente manda una señal/solicitud desde su perfil público
@@ -26,11 +27,21 @@ router.post('/', async (req, res) => {
 
     const fullRequest = fullDataResult.rows[0] || newRequest;
 
-    // Emisión en tiempo real a todos los clientes del panel NeXo Radar
+    // Emisión en tiempo real vía WebSockets a clientes activos
     const io = req.app.get('io');
     if (io) {
       io.emit('new_request', fullRequest);
     }
+
+    // Difusión Web Push a teléfonos Android (incluso con pantalla apagada o app cerrada)
+    sendPushNotificationToAll({
+      title: `🚨 Alerta NeXo: ${fullRequest.business_name || 'Comercio'}`,
+      body: `[${fullRequest.type || 'Servicio'}]: ${fullRequest.message || 'Señal recibida desde terminal QR'}`,
+      icon: fullRequest.logo_url || '/favicon.png',
+      badge: '/favicon.png',
+      url: `/alertas`,
+      tag: `nexo-alert-${fullRequest.id}`
+    }).catch(err => console.debug('[WebPush send error]:', err.message));
 
     res.status(201).json(fullRequest);
   } catch (error) {
@@ -60,7 +71,7 @@ router.get('/', async (req, res) => {
 // Actualizar estado de una alerta específica (NUEVA, EN PROCESO, RESUELTA)
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, attended_by, resolved_by } = req.body;
   try {
     const resolvedAt = status === 'RESUELTA' ? new Date() : null;
     const viewedAt = status === 'EN PROCESO' ? new Date() : null;
@@ -69,9 +80,11 @@ router.patch('/:id', async (req, res) => {
       `UPDATE service_requests 
        SET status = $1, 
            resolved_at = COALESCE($2, resolved_at),
-           viewed_at = COALESCE($3, viewed_at)
-       WHERE id = $4`,
-      [status, resolvedAt, viewedAt, id]
+           viewed_at = COALESCE($3, viewed_at),
+           attended_by = COALESCE($4, attended_by),
+           resolved_by = COALESCE($5, resolved_by)
+       WHERE id = $6`,
+      [status, resolvedAt, viewedAt, attended_by || null, resolved_by || null, id]
     );
     
     const result = await db.query(

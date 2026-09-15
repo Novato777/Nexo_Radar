@@ -25,11 +25,12 @@ export default function Dashboard() {
   useEffect(() => {
     axios.get(`${API_BASE}/api/businesses`)
       .then(res => {
-        setBusinesses(res.data);
+        setBusinesses(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching businesses:', err);
+        setBusinesses([]);
         setLoading(false);
       });
   }, []);
@@ -43,7 +44,8 @@ export default function Dashboard() {
     if (!businessToDelete) return;
     try {
       await axios.delete(`${API_BASE}/api/businesses/${businessToDelete.id}`);
-      const updated = businesses.filter(b => b.id !== businessToDelete.id);
+      const currentList = Array.isArray(businesses) ? businesses : [];
+      const updated = currentList.filter(b => b.id !== businessToDelete.id);
       setBusinesses(updated);
       setDeleteModalOpen(false);
       setBusinessToDelete(null);

@@ -5,14 +5,14 @@ import axios from 'axios';
 // Intervalo de Ping: 10 minutos (600.000 ms) para anticiparse a los 15 min de suspensión de Render
 const PING_INTERVAL_MS = 10 * 60 * 1000; 
 
-// Tiempo límite de inactividad antes de auto-cerrar sesión (15 minutos)
-const DEFAULT_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; 
+// Tiempo límite de inactividad antes de auto-cerrar sesión (45 minutos para trabajo cómodo en campo móvil)
+const DEFAULT_INACTIVITY_TIMEOUT_MS = 45 * 60 * 1000; 
 
 // Throttling de registro de actividad para proteger el rendimiento (máximo cada 5 segundos)
 const ACTIVITY_THROTTLE_MS = 5 * 1000; 
 
-// Intervalo periódico de chequeo de expiración (cada 10 segundos)
-const CHECK_INTERVAL_MS = 10 * 1000;
+// Intervalo periódico de chequeo de expiración (cada 15 segundos)
+const CHECK_INTERVAL_MS = 15 * 1000;
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
 
@@ -44,6 +44,7 @@ export default function useKeepAlive({
     // Rutina de desconexión segura
     const handleLogout = (reason = 'inactivity') => {
       localStorage.removeItem('nexo_auth');
+      localStorage.removeItem('nexo_user');
       localStorage.removeItem('app_last_activity');
       localStorage.removeItem('nexo_last_activity');
 

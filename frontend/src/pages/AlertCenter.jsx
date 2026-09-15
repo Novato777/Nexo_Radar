@@ -5,15 +5,15 @@ import {
   Bell, BellRing, ArrowLeft, Loader2, Phone, MapPin, 
   Clock, CheckCircle2, AlertTriangle, RefreshCw, MessageCircle, 
   ExternalLink, Search, X, Check, Radio, Filter, Building2, ShieldAlert,
-  Layers, ChevronRight
+  Layers, ChevronRight, Smartphone, Volume2 
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import { useSocket } from '../context/SocketContext';
-import { API_BASE, getLogoUrl } from '../config';
+import { API_BASE, getLogoUrl, buildWhatsAppUrl, getResolvedWhatsAppMessage, getContactWhatsAppMessage } from '../config';
 
 export default function AlertCenter() {
   const navigate = useNavigate();
-  const { socket } = useSocket();
+  const { socket, subscribeToPushNotifications, sendTestPush } = useSocket();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -22,11 +22,49 @@ export default function AlertCenter() {
   const [updatingId, setUpdatingId] = useState(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
+  // Estados para Web Push en Android (pantalla apagada / bloqueada)
+  const [isTestingPush, setIsTestingPush] = useState(false);
+  const [isSubscribingPush, setIsSubscribingPush] = useState(false);
+  const [pushStatus, setPushStatus] = useState(() => {
+    return typeof Notification !== 'undefined' ? Notification.permission : 'denied';
+  });
+  const [pushBannerMsg, setPushBannerMsg] = useState('');
+
+  const handleActivatePush = async () => {
+    setIsSubscribingPush(true);
+    if (subscribeToPushNotifications) {
+      const ok = await subscribeToPushNotifications();
+      if (ok) {
+        setPushStatus('granted');
+        setPushBannerMsg('✅ ¡Alertas con pantalla apagada activadas con éxito en este teléfono!');
+      } else {
+        setPushBannerMsg('⚠️ Por favor autoriza los permisos de notificación en tu teléfono/navegador.');
+      }
+    }
+    setIsSubscribingPush(false);
+    setTimeout(() => setPushBannerMsg(''), 6000);
+  };
+
+  const handleTestNotification = async () => {
+    setIsTestingPush(true);
+    setPushBannerMsg('📲 Enviando alerta de prueba... Bloquea tu pantalla ahora para probar.');
+    try {
+      if (sendTestPush) {
+        await sendTestPush();
+      }
+    } catch (err) {
+      setPushBannerMsg('Error enviando prueba: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsTestingPush(false);
+      setTimeout(() => setPushBannerMsg(''), 8000);
+    }
+  };
+
   const fetchRequests = (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true);
     axios.get(`${API_BASE}/api/requests`)
       .then(response => {
-        setRequests(response.data);
+        setRequests(Array.isArray(response.data) ? response.data : []);
         setLoading(false);
         setIsRefreshing(false);
       })
@@ -48,11 +86,17 @@ export default function AlertCenter() {
     if (!socket) return;
 
     const handleNewRequest = (newReq) => {
-      setRequests(prev => [newReq, ...prev.filter(r => r.id !== newReq.id)]);
+      setRequests(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return [newReq, ...arr.filter(r => r.id !== newReq.id)];
+      });
     };
 
     const handleRequestUpdated = (updatedReq) => {
-      setRequests(prev => prev.map(r => r.id === updatedReq.id ? { ...r, ...updatedReq } : r));
+      setRequests(prev => {
+        const arr = Array.isArray(prev) ? prev : [];
+        return arr.map(r => r.id === updatedReq.id ? { ...r, ...updatedReq } : r);
+      });
     };
 
     socket.on('new_request', handleNewRequest);
@@ -73,18 +117,38 @@ export default function AlertCenter() {
     if (newStatus === 'RESUELTA') {
       const targetReq = requests.find(r => r.id === id);
       if (targetReq && targetReq.phone) {
-        const cleanPhone = targetReq.phone.replace(/[^0-9]/g, '');
-        const formattedPhone = cleanPhone.startsWith('57') ? cleanPhone : `57${cleanPhone}`;
-        const msg = `Hola *${targetReq.business_name || 'Comercio'}* 👋 Muchas gracias por preferirnos, agradecemos tu confianza. Tu solicitud de atención ha sido atendida y marcada como *RESUELTA* con éxito. Si necesitas algo más (soporte técnico, asistencia en tu terminal o nuevas consultas), no dudes en escribirnos. ¡Con aprecio, el equipo de NeXo Radar! 🚀`;
-        const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
-        waWindow = window.open(waUrl, '_blank');
+        const msg = getResolvedWhatsAppMessage(targetReq.business_name);
+        const waUrl = buildWhatsAppUrl(targetReq.phone, msg);
+        if (waUrl) {
+          waWindow = window.open(waUrl, '_blank');
+        }
       }
     }
 
+    const currentUserName = (() => {
+      try {
+        const u = JSON.parse(localStorage.getItem('nexo_user'));
+        return u?.name || 'Colaborador';
+      } catch {
+        return 'Colaborador';
+      }
+    })();
+
     try {
-      await axios.patch(`${API_BASE}/api/requests/${id}`, { status: newStatus });
+      const payload = { 
+        status: newStatus,
+        attended_by: newStatus === 'EN PROCESO' ? currentUserName : undefined,
+        resolved_by: newStatus === 'RESUELTA' ? currentUserName : undefined
+      };
+
+      await axios.patch(`${API_BASE}/api/requests/${id}`, payload);
       // Actualización optimista del estado local
-      setRequests(prev => prev.map(req => req.id === id ? { ...req, status: newStatus } : req));
+      setRequests(prev => prev.map(req => req.id === id ? { 
+        ...req, 
+        status: newStatus,
+        attended_by: newStatus === 'EN PROCESO' ? (req.attended_by || currentUserName) : req.attended_by,
+        resolved_by: newStatus === 'RESUELTA' ? currentUserName : req.resolved_by
+      } : req));
     } catch (err) {
       console.error('Error actualizando estado:', err);
       if (waWindow) waWindow.close();
@@ -114,10 +178,8 @@ export default function AlertCenter() {
   // Limpiar teléfono para link de WhatsApp con mensaje pre-escrito profesional
   const getWhatsAppLink = (phone, businessName) => {
     if (!phone) return null;
-    const cleanPhone = phone.replace(/\D/g, '');
-    const validNumber = cleanPhone.startsWith('57') ? cleanPhone : `57${cleanPhone}`;
-    const text = encodeURIComponent(`Hola *${businessName || 'Comercio'}* 👋 Nos comunicamos desde la central operativa de *NeXo Radar* respecto a tu requerimiento de asistencia. ¿En qué podemos colaborarte hoy? 🛡️`);
-    return `https://wa.me/${validNumber}?text=${text}`;
+    const msg = getContactWhatsAppMessage(businessName);
+    return buildWhatsAppUrl(phone, msg);
   };
 
   // Contadores de métricas
@@ -166,7 +228,37 @@ export default function AlertCenter() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              className="btn-secondary"
+              onClick={pushStatus === 'granted' ? handleTestNotification : handleActivatePush}
+              disabled={isTestingPush || isSubscribingPush}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '7px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                fontSize: '0.84rem',
+                fontWeight: '650',
+                borderColor: pushStatus === 'granted' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)',
+                background: pushStatus === 'granted' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                color: pushStatus === 'granted' ? '#10b981' : '#f59e0b'
+              }}
+              title={pushStatus === 'granted' ? "Enviar alerta de prueba para probar con pantalla apagada en Android" : "Activar alertas con pantalla apagada en Android"}
+            >
+              <Smartphone size={16} className={isTestingPush || isSubscribingPush ? 'animate-spin' : ''} />
+              <span>
+                {isSubscribingPush 
+                  ? 'Activando...' 
+                  : isTestingPush 
+                    ? 'Enviando Alerta...' 
+                    : pushStatus === 'granted' 
+                      ? 'Probar Alerta en Celular' 
+                      : 'Activar Alertas de Bloqueo'}
+              </span>
+            </button>
+
             <button
               className="btn-secondary"
               onClick={() => fetchRequests(true)}
@@ -179,6 +271,29 @@ export default function AlertCenter() {
             </button>
           </div>
         </div>
+
+        {/* Banner de Estado de Notificaciones Push */}
+        {pushBannerMsg && (
+          <div style={{
+            background: pushBannerMsg.startsWith('✅') ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+            border: `1px solid ${pushBannerMsg.startsWith('✅') ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+            borderRadius: '12px',
+            padding: '12px 18px',
+            marginBottom: '20px',
+            color: pushBannerMsg.startsWith('✅') ? '#10b981' : '#f59e0b',
+            fontSize: '0.88rem',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px'
+          }}>
+            <span>{pushBannerMsg}</span>
+            <button onClick={() => setPushBannerMsg('')} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px' }}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         {/* BARRA DE MÉTRICAS / KPIS (RESPONSIVA EN 2 COLUMNAS EN MÓVIL) */}
         <div className="alert-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '24px' }}>
@@ -597,11 +712,17 @@ export default function AlertCenter() {
                         <span style={{ 
                           display: 'inline-flex', alignItems: 'center', gap: '5px',
                           background: statusBg, color: statusColor, border: `1px solid ${statusBorder}`,
-                          padding: '3px 9px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: '800', textTransform: 'uppercase'
+                          padding: '3px 10px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: '800', textTransform: 'uppercase'
                         }}>
                           {pulseClass && <span className={pulseClass} style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor }}></span>}
                           {!pulseClass && <CheckCircle2 size={12} />}
-                          <span>{rawStatus}</span>
+                          <span>
+                            {isInProgress 
+                              ? `En revisión ${req.attended_by ? `por ${req.attended_by}` : ''}`
+                              : isResolved 
+                                ? `Completado ${req.resolved_by || req.attended_by ? `por ${req.resolved_by || req.attended_by}` : ''}`
+                                : 'Nueva Alerta'}
+                          </span>
                         </span>
                         <span style={{ fontSize: '0.74rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Clock size={12} /> {formatDate(req.created_at)}
@@ -710,7 +831,7 @@ export default function AlertCenter() {
                             fontSize: '0.78rem', fontWeight: '750', minHeight: '38px'
                           }}>
                             <CheckCircle2 size={14} />
-                            <span>Resuelta</span>
+                            <span>Completado {req.resolved_by || req.attended_by ? `por ${req.resolved_by || req.attended_by}` : ''}</span>
                           </span>
                         )}
                       </div>
