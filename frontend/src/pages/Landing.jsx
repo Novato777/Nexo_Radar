@@ -998,103 +998,108 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* 6. FOOTER CORPORATIVO ULTRA LIMPIO (SIN TEXTO DUPLICADO) */}
-      <footer className="landing-footer">
-        <div className="landing-container">
-          
-          <div className="footer-cols-grid">
+      {/* 6. FOOTER ESTILO NEXO PAGE CON INFO NEXO RADAR */}
+      <footer className="footer-nxp">
+        {/* Línea superior sutil */}
+        <div className="footer-nxp-top-bar" />
+        
+        {/* Carrusel de Tecnologías */}
+        <div className="footer-nxp-tech">
+          <p className="footer-nxp-tech-title">Tecnologías que impulsan NeXo Radar</p>
+          <div className="footer-nxp-marquee">
+            <div className="footer-nxp-marquee-track">
+              {/* Set 1 */}
+              <div className="footer-nxp-tech-item"><Terminal size={32}/><span>React</span></div>
+              <div className="footer-nxp-tech-item"><Zap size={32}/><span>Vite</span></div>
+              <div className="footer-nxp-tech-item"><Server size={32}/><span>Node.js</span></div>
+              <div className="footer-nxp-tech-item"><Radio size={32}/><span>Socket.io</span></div>
+              <div className="footer-nxp-tech-item"><Layers size={32}/><span>PostgreSQL</span></div>
+              <div className="footer-nxp-tech-item"><MapPin size={32}/><span>Leaflet</span></div>
+              <div className="footer-nxp-tech-item"><Globe size={32}/><span>Express</span></div>
+              <div className="footer-nxp-tech-item"><Shield size={32}/><span>JWT Auth</span></div>
+              <div className="footer-nxp-tech-item"><Cpu size={32}/><span>Cloudinary</span></div>
+              {/* Set 2 para loop continuo */}
+              <div className="footer-nxp-tech-item"><Terminal size={32}/><span>React</span></div>
+              <div className="footer-nxp-tech-item"><Zap size={32}/><span>Vite</span></div>
+              <div className="footer-nxp-tech-item"><Server size={32}/><span>Node.js</span></div>
+              <div className="footer-nxp-tech-item"><Radio size={32}/><span>Socket.io</span></div>
+              <div className="footer-nxp-tech-item"><Layers size={32}/><span>PostgreSQL</span></div>
+              <div className="footer-nxp-tech-item"><MapPin size={32}/><span>Leaflet</span></div>
+              <div className="footer-nxp-tech-item"><Globe size={32}/><span>Express</span></div>
+              <div className="footer-nxp-tech-item"><Shield size={32}/><span>JWT Auth</span></div>
+              <div className="footer-nxp-tech-item"><Cpu size={32}/><span>Cloudinary</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="landing-container footer-nxp-main">
+          <div className="footer-nxp-grid">
             
-            {/* Columna 1: Marca Limpia (Solo Logo sin texto redundante) */}
-            <div className="footer-brand-col">
-              <div className="footer-logo-box">
-                <img 
-                  src="/logo-nexo-radar-dark.png" 
-                  alt="NeXo Radar" 
-                  className="footer-clean-logo" 
-                />
-              </div>
-              <p className="footer-p">
-                La solución integral diseñada para empresas y centrales que buscan monitoreo satelital en tiempo real, trazabilidad de terminales QR y respuesta operativa inmediata.
+            {/* Columna 1: Marca */}
+            <div className="footer-nxp-brand-col">
+              <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="footer-nxp-logo-link">
+                <img src="/logo-nexo-radar-dark.png" alt="NeXo Radar" className="footer-nxp-logo-img" />
+                <span className="footer-nxp-brand-text">Ne<span className="headline-gradient">X</span>o Radar</span>
+              </a>
+              <p className="footer-nxp-slogan">
+                Desarrollo de software de telemetría y web para negocios que requieren operaciones en tiempo real.
               </p>
             </div>
 
-            {/* Columna 2: PRODUCTO */}
-            <div className="footer-nav-col">
-              <h4 className="footer-col-title">PRODUCTO</h4>
-              <ul className="footer-links-list">
-                <li><a href="#arquitectura" className="footer-link">Características</a></li>
-                <li><a href="#ecosistema" className="footer-link">Radar Satelital</a></li>
-                <li><a href="#ecosistema" className="footer-link">Alertas en Tiempo Real</a></li>
-                <li><a href="#ecosistema" className="footer-link">Terminales QR</a></li>
+            {/* Columna 2: Navegación */}
+            <div className="footer-nxp-nav-col">
+              <h4 className="footer-nxp-nav-title">Navegación</h4>
+              <ul className="footer-nxp-nav-list">
+                <li><a href="#telemetria">Misión Control</a></li>
+                <li><a href="#ecosistema">Simulador QR</a></li>
+                <li><a href="#arquitectura">Arquitectura</a></li>
+                <li><a href="#contacto">Contacto</a></li>
               </ul>
             </div>
 
-            {/* Columna 3: SOPORTE Y CONTACTO */}
-            <div className="footer-nav-col">
-              <h4 className="footer-col-title">SOPORTE Y CONTACTO</h4>
-              <ul className="footer-links-list">
+            {/* Columna 3: Servicios */}
+            <div className="footer-nxp-nav-col">
+              <h4 className="footer-nxp-nav-title">Servicios</h4>
+              <ul className="footer-nxp-nav-list">
+                <li>Radar Satelital en Vivo</li>
+                <li>Alertas Subsegundo</li>
+                <li>Terminales Físicas QR</li>
+                <li>Autenticación Zero-Trust</li>
+                <li>PWA & Pantalla Bloqueada</li>
+              </ul>
+            </div>
+
+            {/* Columna 4: Contacto */}
+            <div className="footer-nxp-nav-col">
+              <h4 className="footer-nxp-nav-title">Contacto</h4>
+              <ul className="footer-nxp-nav-list">
                 <li>
-                  <a 
-                    href="https://wa.me/573222067870" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="footer-link icon-link"
-                  >
-                    <MessageCircle size={15} color="#f59e0b" />
-                    <span>WhatsApp</span>
+                  <a href="https://wa.me/573222067870" target="_blank" rel="noopener noreferrer" className="footer-nxp-icon-link">
+                    <MessageCircle size={18} className="icon-cyan" /> WhatsApp
                   </a>
                 </li>
                 <li>
-                  <a 
-                    href="mailto:contacto@nexoradar.com" 
-                    className="footer-link icon-link"
-                  >
-                    <Mail size={15} color="#f59e0b" />
-                    <span>Correo</span>
+                  <a href="mailto:contacto@nexoradar.com" className="footer-nxp-icon-link">
+                    <Mail size={18} className="icon-cyan" /> contacto@nexoradar.com
                   </a>
                 </li>
-                <li className="footer-text-row">
-                  <MapPin size={15} color="#f59e0b" />
-                  <span>Colombia</span>
+                <li className="footer-nxp-icon-link" style={{ pointerEvents: 'none' }}>
+                  <MapPin size={18} className="icon-cyan" /> Colombia
                 </li>
               </ul>
             </div>
 
-            {/* Columna 4: LEGAL & ACCESO */}
-            <div className="footer-nav-col">
-              <h4 className="footer-col-title">LEGAL</h4>
-              <ul className="footer-links-list legal-list">
-                <li><a href="#legal" onClick={e => e.preventDefault()} className="footer-link">Términos de Servicio</a></li>
-                <li><a href="#privacidad" onClick={e => e.preventDefault()} className="footer-link">Política de Privacidad</a></li>
-                <li><a href="#cookies" onClick={e => e.preventDefault()} className="footer-link">Cookies</a></li>
-              </ul>
-
-              <button
-                onClick={() => navigate(hasAuth ? '/dashboard' : '/login')}
-                className="footer-login-btn"
-              >
-                <ArrowRight size={14} />
-                <span>{hasAuth ? 'Ir al Dashboard' : 'Acceso a Plataforma'}</span>
-              </button>
-            </div>
-
           </div>
+        </div>
 
-          <div className="footer-divider" />
-
-          {/* Barra Inferior con Firma Oficial Obligatoria */}
-          <div className="footer-bottom-bar">
-            <span className="copyright-text">
-              © 2026 NeXo Radar. Todos los derechos reservados.
-            </span>
-
-            <div className="developer-signature">
-              <span>Desarrollado por <strong className="dev-brand">NeXo</strong></span>
-              <span className="dev-pipe">|</span>
-              <span className="dev-author">by Brayan Cardozo</span>
-            </div>
+        {/* Barra Inferior */}
+        <div className="footer-nxp-bottom">
+          <div className="landing-container footer-nxp-bottom-flex">
+            <p>© 2026 NeXo Radar. Todos los derechos reservados.</p>
+            <p>
+              Diseñado y desarrollado por <span className="dev-name">Brayan Cardozo</span>
+            </p>
           </div>
-
         </div>
       </footer>
 
@@ -3300,21 +3305,173 @@ export default function Landing() {
             box-sizing: border-box;
           }
 
-          /* 9. FOOTER RESPONSIVE */
-          .footer-cols-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
+          /* 9. FOOTER ESTILO NEXO PAGE */
+          .footer-nxp {
+            position: relative;
+            overflow: hidden;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: #020617; /* bg-nexo-bg */
+            z-index: 10;
           }
-          @media (max-width: 440px) {
-            .footer-cols-grid {
-              grid-template-columns: 1fr;
-              gap: 20px;
+          .footer-nxp-top-bar {
+            height: 1px;
+            width: 100%;
+            background: linear-gradient(to right, transparent, rgba(6, 182, 212, 0.5), transparent);
+          }
+          .footer-nxp-tech {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 48px 0;
+            overflow: hidden;
+          }
+          .footer-nxp-tech-title {
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #94a3b8;
+            margin-bottom: 36px;
+          }
+          .footer-nxp-marquee {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+          }
+          .footer-nxp-marquee-track {
+            display: inline-flex;
+            gap: 60px;
+            animation: marquee 25s linear infinite;
+            padding-left: 60px;
+          }
+          .footer-nxp-tech-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #475569;
+            transition: all 0.3s ease;
+          }
+          .footer-nxp-tech-item:hover {
+            color: #06b6d4;
+            transform: scale(1.1);
+          }
+          .footer-nxp-tech-item span {
+            font-weight: 700;
+            font-size: 1.1rem;
+          }
+          @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          
+          .footer-nxp-main {
+            padding: 64px 24px;
+          }
+          .footer-nxp-grid {
+            display: grid;
+            gap: 48px;
+            grid-template-columns: 1fr;
+          }
+          @media (min-width: 768px) {
+            .footer-nxp-grid {
+              grid-template-columns: repeat(2, 1fr);
             }
           }
-          .footer-bottom-bar {
+          @media (min-width: 1024px) {
+            .footer-nxp-grid {
+              grid-template-columns: repeat(4, 1fr);
+            }
+          }
+          
+          .footer-nxp-logo-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            margin-bottom: 20px;
+          }
+          .footer-nxp-logo-img {
+            height: 48px;
+            width: auto;
+          }
+          .footer-nxp-brand-text {
+            font-size: 2.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: #f8fafc;
+          }
+          .footer-nxp-slogan {
+            max-width: 320px;
+            font-size: 1rem;
+            line-height: 1.625;
+            color: #94a3b8;
+            margin: 0;
+          }
+          
+          .footer-nxp-nav-title {
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #f8fafc;
+            margin: 0 0 20px 0;
+          }
+          .footer-nxp-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
             flex-direction: column;
-            text-align: center;
-            gap: 10px;
+            gap: 12px;
+          }
+          .footer-nxp-nav-list li, .footer-nxp-nav-list a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: color 0.2s;
+          }
+          .footer-nxp-nav-list a:hover {
+            color: #06b6d4;
+          }
+          
+          .footer-nxp-icon-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.2s;
+          }
+          .footer-nxp-icon-link:hover {
+            color: #06b6d4;
+          }
+          .icon-cyan {
+            color: #06b6d4;
+          }
+          
+          .footer-nxp-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+          }
+          .footer-nxp-bottom-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 24px;
+            font-size: 1rem;
+            color: #94a3b8;
+          }
+          @media (min-width: 640px) {
+            .footer-nxp-bottom-flex {
+              flex-direction: row;
+            }
+          }
+          .dev-name {
+            font-weight: 500;
+            color: #f8fafc;
           }
         }
       `}</style>
