@@ -39,7 +39,12 @@ export default function SuperAdmin() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/api/users`);
+      const res = await axios.get(`${API_BASE}/api/users?_t=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Error cargando colaboradores:', err);
@@ -55,6 +60,22 @@ export default function SuperAdmin() {
 
   useEffect(() => {
     fetchUsers();
+
+    const handleWakeUp = () => {
+      if (document.visibilityState === 'visible' || !document.hidden) {
+        fetchUsers();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeUp);
+    window.addEventListener('pageshow', handleWakeUp);
+    window.addEventListener('focus', handleWakeUp);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleWakeUp);
+      window.removeEventListener('pageshow', handleWakeUp);
+      window.removeEventListener('focus', handleWakeUp);
+    };
   }, []);
 
   const showNotification = (text, type = 'success') => {

@@ -54,6 +54,10 @@ router.post('/', async (req, res) => {
 // Panel de NeXo: Lista todas las solicitudes para ser atendidas
 router.get('/', async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const result = await db.query(`
       SELECT r.*, b.business_name, b.city, b.phone, b.logo_url 
       FROM service_requests r 

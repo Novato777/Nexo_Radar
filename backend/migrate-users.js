@@ -5,13 +5,17 @@ const bcrypt = require('bcryptjs');
 async function migrateUsers() {
   console.log('[Migración] Verificando tabla users y roles...');
   try {
-    // 1. Asegurar extensión uuid
-    await db.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+    // 1. Asegurar extensión uuid de forma tolerante (si no tiene permisos superuser, usa gen_random_uuid nativo)
+    try {
+      await db.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+    } catch (extErr) {
+      console.warn('[Migración] uuid-ossp omitido (usando gen_random_uuid nativo):', extErr.message);
+    }
 
     // 2. Crear tabla users si no existe
     await db.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name VARCHAR(100) NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
@@ -51,7 +55,7 @@ async function migrateUsers() {
     // 4. Tabla para suscripciones Web Push en Android y navegadores
     await db.query(`
       CREATE TABLE IF NOT EXISTS push_subscriptions (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         endpoint TEXT UNIQUE NOT NULL,
         p256dh TEXT NOT NULL,
         auth TEXT NOT NULL,

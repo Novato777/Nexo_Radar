@@ -7,6 +7,10 @@ const bcrypt = require('bcryptjs');
 // Lista todos los colaboradores y administradores del sistema
 router.get('/', async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const result = await db.query(
       'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC'
     );

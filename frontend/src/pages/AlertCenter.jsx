@@ -13,7 +13,7 @@ import { API_BASE, getLogoUrl, buildWhatsAppUrl, getResolvedWhatsAppMessage, get
 
 export default function AlertCenter() {
   const navigate = useNavigate();
-  const { socket, subscribeToPushNotifications, sendTestPush } = useSocket();
+  const { socket, subscribeToPushNotifications, sendTestPush, lastSyncTimestamp } = useSocket();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -62,9 +62,15 @@ export default function AlertCenter() {
 
   const fetchRequests = (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true);
-    axios.get(`${API_BASE}/api/requests`)
+    axios.get(`${API_BASE}/api/requests?_t=${Date.now()}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    })
       .then(response => {
-        setRequests(Array.isArray(response.data) ? response.data : []);
+        const data = Array.isArray(response.data) ? response.data : [];
+        setRequests(data);
         setLoading(false);
         setIsRefreshing(false);
       })
@@ -77,9 +83,34 @@ export default function AlertCenter() {
 
   useEffect(() => {
     fetchRequests();
-    const interval = setInterval(() => fetchRequests(false), 15000);
-    return () => clearInterval(interval);
+    // Intervalo de respaldo activo
+    const interval = setInterval(() => fetchRequests(false), 10000);
+
+    // Detección de regreso a la pestaña, desbloqueo de pantalla y bfcache en móviles
+    const handleWakeUp = () => {
+      if (document.visibilityState === 'visible' || !document.hidden) {
+        fetchRequests(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeUp);
+    window.addEventListener('pageshow', handleWakeUp);
+    window.addEventListener('focus', handleWakeUp);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleWakeUp);
+      window.removeEventListener('pageshow', handleWakeUp);
+      window.removeEventListener('focus', handleWakeUp);
+    };
   }, []);
+
+  // Reaccionar a sincronizaciones globales de SocketContext
+  useEffect(() => {
+    if (lastSyncTimestamp) {
+      fetchRequests(false);
+    }
+  }, [lastSyncTimestamp]);
 
   // Sincronización en tiempo real vía Socket.IO
   useEffect(() => {
@@ -90,6 +121,8 @@ export default function AlertCenter() {
         const arr = Array.isArray(prev) ? prev : [];
         return [newReq, ...arr.filter(r => r.id !== newReq.id)];
       });
+      // Sincronización secundaria inmediata para recalcular contadores y validar consistencia
+      fetchRequests(false);
     };
 
     const handleRequestUpdated = (updatedReq) => {
@@ -99,12 +132,20 @@ export default function AlertCenter() {
       });
     };
 
+    const handleSocketReconnect = () => {
+      fetchRequests(false);
+    };
+
     socket.on('new_request', handleNewRequest);
     socket.on('request_updated', handleRequestUpdated);
+    socket.on('connect', handleSocketReconnect);
+    socket.on('reconnect', handleSocketReconnect);
 
     return () => {
       socket.off('new_request', handleNewRequest);
       socket.off('request_updated', handleRequestUpdated);
+      socket.off('connect', handleSocketReconnect);
+      socket.off('reconnect', handleSocketReconnect);
     };
   }, [socket]);
 

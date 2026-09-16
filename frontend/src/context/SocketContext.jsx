@@ -90,9 +90,13 @@ export function SocketProvider({ children }) {
     }
   };
 
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState(Date.now());
+
   // Consultar si existen alertas NUEVAS para el punto amarillo en el navbar
   const checkInitialNewAlerts = React.useCallback(() => {
-    axios.get(`${API_BASE}/api/requests`)
+    axios.get(`${API_BASE}/api/requests?_t=${Date.now()}`, {
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+    })
       .then(res => {
         const list = Array.isArray(res.data) ? res.data : [];
         const newOnes = list.filter(r => (r.status || '').toUpperCase() === 'NUEVA' || (r.status || '').toUpperCase() === 'PENDIENTE');
@@ -103,6 +107,7 @@ export function SocketProvider({ children }) {
           setHasNewAlerts(false);
           setNewAlertsCount(0);
         }
+        setLastSyncTimestamp(Date.now());
       })
       .catch(err => console.debug('Error comprobando alertas iniciales', err));
   }, []);
@@ -117,12 +122,17 @@ export function SocketProvider({ children }) {
     // Inicializar conexión Socket.IO con el backend
     const newSocket = io(API_BASE, {
       transports: ['websocket', 'polling'],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000
+      reconnectionAttempts: 15,
+      reconnectionDelay: 1500
     });
 
     newSocket.on('connect', () => {
       console.log('[Socket.IO] Conectado a la red NeXo en tiempo real');
+      checkInitialNewAlerts();
+    });
+
+    newSocket.on('reconnect', () => {
+      console.log('[Socket.IO] Reconectado a la red NeXo');
       checkInitialNewAlerts();
     });
 
@@ -132,6 +142,7 @@ export function SocketProvider({ children }) {
       setHasNewAlerts(true);
       setNewAlertsCount(prev => prev + 1);
       setLatestAlert(data);
+      setLastSyncTimestamp(Date.now());
       playChime();
       triggerPushNotification(data);
     });
@@ -141,10 +152,27 @@ export function SocketProvider({ children }) {
       checkInitialNewAlerts();
     });
 
+    // Control de despertar y recuperación desde bfcache en Android / móviles
+    const handleAppWakeUp = () => {
+      if (document.visibilityState === 'visible' || !document.hidden) {
+        if (newSocket && !newSocket.connected) {
+          newSocket.connect();
+        }
+        checkInitialNewAlerts();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleAppWakeUp);
+    window.addEventListener('pageshow', handleAppWakeUp);
+    window.addEventListener('focus', handleAppWakeUp);
+
     setSocket(newSocket);
 
     return () => {
       clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleAppWakeUp);
+      window.removeEventListener('pageshow', handleAppWakeUp);
+      window.removeEventListener('focus', handleAppWakeUp);
       newSocket.disconnect();
     };
   }, [checkInitialNewAlerts]);
@@ -159,7 +187,9 @@ export function SocketProvider({ children }) {
       hasNewAlerts, 
       newAlertsCount, 
       clearNewAlertsDot, 
-      latestAlert,
+      latestAlert, 
+      lastSyncTimestamp,
+      checkInitialNewAlerts,
       requestNotificationPermission,
       subscribeToPushNotifications: registerServiceWorkerAndSubscribePush,
       sendTestPush
