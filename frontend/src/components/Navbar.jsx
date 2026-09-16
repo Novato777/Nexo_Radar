@@ -10,6 +10,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { hasNewAlerts, newAlertsCount, clearNewAlertsDot } = useSocket() || {};
+  const scrollContainerRef = React.useRef(null);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('nexo_theme') || 'dark';
@@ -49,6 +50,20 @@ export default function Navbar() {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
     localStorage.setItem('nexo_theme', nextTheme);
+  };
+
+  // Restaurar la posición de scroll de la barra de navegación móvil al cambiar de ruta
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const savedScroll = sessionStorage.getItem('nexo_nav_scroll');
+      if (savedScroll) {
+        scrollContainerRef.current.scrollLeft = parseInt(savedScroll, 10);
+      }
+    }
+  }, []);
+
+  const handleNavScroll = (e) => {
+    sessionStorage.setItem('nexo_nav_scroll', e.target.scrollLeft);
   };
 
   const handleLogout = () => {
@@ -115,7 +130,11 @@ export default function Navbar() {
         </div>
 
         {/* Navigation Links (Módulos Principales) */}
-        <div className="navbar-links">
+        <div 
+          className="navbar-links" 
+          ref={scrollContainerRef} 
+          onScroll={handleNavScroll}
+        >
           <NavItem path="/dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem path="/terminales" icon={Server} label="Terminales" />
           <NavItem path="/mapa" icon={Map} label="Mapa" />
