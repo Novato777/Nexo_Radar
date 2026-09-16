@@ -225,13 +225,13 @@ export default function AlertCenter() {
 
   // Contadores de métricas
   const totalCount = requests.length;
-  const newCount = requests.filter(r => (r.status || 'NUEVA').toUpperCase() === 'NUEVA' || (r.status || '').toUpperCase() === 'PENDIENTE').length;
-  const inProgressCount = requests.filter(r => (r.status || '').toUpperCase() === 'EN PROCESO').length;
-  const resolvedCount = requests.filter(r => (r.status || '').toUpperCase() === 'RESUELTA' || (r.status || '').toUpperCase() === 'ATENDIDA').length;
+  const newCount = requests.filter(r => (r.status || 'NUEVA').trim().toUpperCase() === 'NUEVA' || (r.status || '').trim().toUpperCase() === 'PENDIENTE').length;
+  const inProgressCount = requests.filter(r => (r.status || '').trim().toUpperCase() === 'EN PROCESO').length;
+  const resolvedCount = requests.filter(r => (r.status || '').trim().toUpperCase() === 'RESUELTA' || (r.status || '').trim().toUpperCase() === 'ATENDIDA').length;
 
   // Filtrado de solicitudes
   const filteredRequests = requests.filter(req => {
-    const status = (req.status || 'NUEVA').toUpperCase();
+    const status = (req.status || 'NUEVA').trim().toUpperCase();
     if (activeFilter === 'NUEVA' && status !== 'NUEVA' && status !== 'PENDIENTE') return false;
     if (activeFilter === 'EN PROCESO' && status !== 'EN PROCESO') return false;
     if (activeFilter === 'RESUELTA' && status !== 'RESUELTA' && status !== 'ATENDIDA') return false;
@@ -544,7 +544,7 @@ export default function AlertCenter() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {filteredRequests.slice(0, 3).map(req => {
-                  const s = (req.status || 'NUEVA').toUpperCase();
+                  const s = (req.status || 'NUEVA').trim().toUpperCase();
                   const isNew = s === 'NUEVA' || s === 'PENDIENTE';
                   const isInProg = s === 'EN PROCESO';
                   const dotColor = isNew ? '#ef4444' : isInProg ? '#f59e0b' : '#10b981';
@@ -671,7 +671,7 @@ export default function AlertCenter() {
               </div>
             ) : (
               filteredRequests.map(req => {
-                const rawStatus = (req.status || 'NUEVA').toUpperCase();
+                const rawStatus = (req.status || 'NUEVA').trim().toUpperCase();
                 const isNew = rawStatus === 'NUEVA' || rawStatus === 'PENDIENTE';
                 const isInProgress = rawStatus === 'EN PROCESO';
                 const isResolved = rawStatus === 'RESUELTA' || rawStatus === 'ATENDIDA';
