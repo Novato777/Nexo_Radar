@@ -13,29 +13,50 @@ export function SocketProvider({ children }) {
   const [latestAlert, setLatestAlert] = useState(null);
   const audioContextRef = useRef(null);
 
-  // Reproducir un tono suave y profesional sin depender de archivos de audio externos
+  // Reproducir alerta por voz (Text-to-Speech)
   const playChime = () => {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      if ('speechSynthesis' in window) {
+        // Cancelar cualquier audio pendiente para que hable de inmediato
+        window.speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance('Tienes un servicio nuevo');
+        utterance.lang = 'es-ES'; // Español
+        utterance.volume = 1.0; // Volumen máximo posible
+        utterance.rate = 1.1; // Velocidad ligeramente rápida para dar sensación de urgencia
+        utterance.pitch = 1.2; // Tono agudo (femenino)
+        
+        // Intentar asegurar una voz femenina si está disponible en el dispositivo
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => v.lang.startsWith('es') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('mujer') || v.name.toLowerCase().includes('monica') || v.name.toLowerCase().includes('paulina') || v.name.toLowerCase().includes('lucia')));
+        
+        if (femaleVoice) {
+          utterance.voice = femaleVoice;
+        }
 
-      osc.type = 'sine';
-      // Doble tono suave tipo sonar/radar
-      const now = ctx.currentTime;
-      osc.frequency.setValueAtTime(587.33, now); // Re 5
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); // La 5
-      osc.frequency.exponentialRampToValueAtTime(1174.66, now + 0.25); // Re 6
+        window.speechSynthesis.speak(utterance);
+      } else {
+        // Fallback al sonido de radar si el dispositivo no soporta síntesis de voz
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-      gain.gain.setValueAtTime(0.18, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+        osc.type = 'sine';
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(1174.66, now + 0.25);
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.45);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      }
     } catch (err) {
       console.debug('Audio chime no activado por interacción previa');
     }
