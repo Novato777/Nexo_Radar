@@ -35,8 +35,16 @@ function EditLocationPicker({ position, setPosition }) {
 function EditMapController({ center }) {
   const map = useMap();
   useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [map]);
+
+  useEffect(() => {
     if (center) {
       map.setView(center, 14, { animate: true, duration: 0.6 });
+      map.invalidateSize();
     }
   }, [center, map]);
   return null;
@@ -78,6 +86,37 @@ export default function Dashboard() {
   const [editError, setEditError] = useState('');
   const editFileInputRef = useRef(null);
 
+  // Buscador de nueva dirección o ciudad en el modal de edición
+  const [editSearchQuery, setEditSearchQuery] = useState('');
+  const [editSuggestions, setEditSuggestions] = useState([]);
+  const [editSearching, setEditSearching] = useState(false);
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (editSearchQuery.length > 2) {
+        setEditSearching(true);
+        axios.get(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=co&q=${encodeURIComponent(editSearchQuery)}`)
+          .then(res => {
+            setEditSuggestions(res.data);
+            setEditSearching(false);
+          })
+          .catch(() => setEditSearching(false));
+      } else {
+        setEditSuggestions([]);
+      }
+    }, 450);
+    return () => clearTimeout(delayDebounce);
+  }, [editSearchQuery]);
+
+  const handleSelectEditLocation = (item) => {
+    const lat = parseFloat(item.lat);
+    const lng = parseFloat(item.lon);
+    setEditPosition({ lat, lng });
+    setEditMapCenter([lat, lng]);
+    setEditSearchQuery('');
+    setEditSuggestions([]);
+  };
+
   const openEditModal = (business, e) => {
     if (e) e.stopPropagation();
     setEditingBusiness(business);
@@ -103,6 +142,8 @@ export default function Dashboard() {
     setEditFile(null);
     setEditPreviewUrl(business.logo_url ? getLogoUrl(business.logo_url) : null);
     setEditError('');
+    setEditSearchQuery('');
+    setEditSuggestions([]);
     setEditModalOpen(true);
   };
 
@@ -750,24 +791,64 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Selector de Mapa GPS */}
+          {/* Selector de Mapa GPS con Reubicación Dinámica */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
-                Ubicación Satelital (Radar GPS)
-              </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <label style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
+                  Ubicación Satelital (Radar GPS)
+                </label>
+                <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: 'var(--color-text-secondary)' }}>
+                  Haz clic sobre el mapa en la nueva dirección para mover el pin GPS.
+                </p>
+              </div>
               <button 
                 type="button" 
                 className="btn-secondary" 
                 onClick={handleUseCurrentLocationForEdit}
-                style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                style={{ padding: '5px 12px', fontSize: '0.78rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(6, 182, 212, 0.1)', color: 'var(--color-accent)', border: '1px solid rgba(6, 182, 212, 0.3)' }}
               >
-                <Navigation size={12} />
-                <span>Mi GPS</span>
+                <Navigation size={13} />
+                <span>Usar Mi GPS Actual</span>
               </button>
             </div>
 
-            <div style={{ height: '220px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(6, 182, 212, 0.3)', position: 'relative' }}>
+            {/* Buscador de dirección rápida para centrar el mapa */}
+            <div style={{ position: 'relative', marginBottom: '8px' }}>
+              <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
+              <input 
+                type="text"
+                placeholder="Buscar nueva dirección o ciudad para mover el mapa..."
+                value={editSearchQuery}
+                onChange={(e) => setEditSearchQuery(e.target.value)}
+                className="input-styled"
+                style={{ width: '100%', height: '36px', paddingLeft: '34px', fontSize: '0.82rem' }}
+              />
+              {editSearching && <Loader2 size={15} className="animate-spin" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)' }} />}
+
+              {editSuggestions.length > 0 && (
+                <ul style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000,
+                  background: '#0f172a', border: '1px solid rgba(6, 182, 212, 0.3)',
+                  borderRadius: '8px', listStyle: 'none', margin: '4px 0 0', padding: '6px 0',
+                  maxHeight: '160px', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+                }}>
+                  {editSuggestions.map((sug, idx) => (
+                    <li 
+                      key={idx}
+                      onClick={() => handleSelectEditLocation(sug)}
+                      style={{ padding: '8px 12px', fontSize: '0.8rem', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--color-text-primary)' }}
+                      onMouseOver={e => e.currentTarget.style.background = 'rgba(6,182,212,0.15)'}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      📍 {sug.display_name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid rgba(6, 182, 212, 0.35)', position: 'relative' }}>
               <MapContainer 
                 center={editMapCenter} 
                 zoom={14} 
@@ -782,14 +863,15 @@ export default function Dashboard() {
               </MapContainer>
             </div>
 
-            <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-              <span>
+            <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(2, 6, 23, 0.5)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', flexWrap: 'wrap', gap: '6px' }}>
+              <span style={{ color: editPosition ? '#10b981' : '#f87171', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <MapPin size={13} />
                 {editPosition 
-                  ? `Lat: ${editPosition.lat.toFixed(5)}, Lng: ${editPosition.lng.toFixed(5)}`
-                  : '⚠️ Sin coordenadas fijadas. Haz clic en el mapa para marcar el punto.'}
+                  ? `Coordenadas fijadas: ${editPosition.lat.toFixed(6)}, ${editPosition.lng.toFixed(6)}`
+                  : '⚠️ Sin coordenadas. Haz clic en el mapa para marcar la nueva ubicación.'}
               </span>
-              <span style={{ color: 'var(--color-accent)', fontWeight: '600' }}>
-                Haz clic en el mapa para mover el pin
+              <span style={{ color: 'var(--color-accent)', fontWeight: '700' }}>
+                📌 Haz clic en el mapa para mover el pin
               </span>
             </div>
           </div>
