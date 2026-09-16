@@ -55,30 +55,30 @@ export default function Footer() {
         <div className="tech-loop relative overflow-hidden">
           <LogoLoop
             logos={techLogos}
-            speed={55}
+            speed={40}
             direction="left"
-            logoHeight={42}
-            gap={60}
+            logoHeight={26}
+            gap={48}
             pauseOnHover
             scaleOnHover
             fadeOut
-            fadeOutColor="#060912" /* <-- Mismo color que var(--color-nexo-bg) */
+            fadeOutColor="#020617" /* Match landing-root bg color exactly */
             ariaLabel="Tecnologías que usamos"
           />
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-6 py-16">
+      <div className="landing-container py-16">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Marca */}
           <div className="lg:col-span-1">
             <a href="#inicio" className="flex items-center gap-3">
-              <Logo size={56} />
-              <span className="text-4xl font-bold tracking-tight">
+              <Logo size={42} />
+              <span className="text-3xl font-bold tracking-tight">
                 Ne<span className="text-gradient">X</span>o Radar
               </span>
             </a>
-            <p className="mt-5 max-w-xs text-base leading-relaxed text-nexo-muted">
+            <p className="mt-5 max-w-xs text-sm leading-relaxed text-nexo-muted">
               {site.slogan}
             </p>
           </div>
@@ -134,7 +134,7 @@ export default function Footer() {
 
       {/* Barra inferior */}
       <div className="border-t border-nexo-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-base text-nexo-muted sm:flex-row">
+        <div className="landing-container flex flex-col items-center justify-between gap-3 py-6 text-sm text-nexo-muted sm:flex-row">
           <p>© 2026 {site.name}. Todos los derechos reservados.</p>
           <p>
             Diseñado y desarrollado por <span className="font-medium text-nexo-text">{site.developer}</span>
