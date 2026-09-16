@@ -83,8 +83,8 @@ export default function AlertCenter() {
 
   useEffect(() => {
     fetchRequests();
-    // Intervalo de respaldo activo
-    const interval = setInterval(() => fetchRequests(false), 10000);
+    // Intervalo de respaldo activo (Socket.IO entrega en tiempo real sin saturar)
+    const interval = setInterval(() => fetchRequests(false), 25000);
 
     // Detección de regreso a la pestaña, desbloqueo de pantalla y bfcache en móviles
     const handleWakeUp = () => {

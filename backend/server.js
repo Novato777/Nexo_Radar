@@ -12,6 +12,9 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
+// Configurar trust proxy para proxies inversos (Render / Cloudflare / Vercel)
+app.set('trust proxy', 1);
+
 // Configuración de Socket.IO con CORS abierto para el panel
 const io = new Server(server, {
   cors: {
@@ -53,12 +56,13 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: Date.now() });
 });
 
-// Rate Limiting General: 500 peticiones por ventana de 15 minutos por IP
+// Rate Limiting General para protección contra abusos (no estrangular lecturas de monitoreo ni sockets)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 3000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'GET', // No bloquear lecturas de monitoreo en tiempo real
   message: { error: 'Demasiadas peticiones desde esta IP, intenta más tarde.' }
 });
 app.use('/api', generalLimiter);

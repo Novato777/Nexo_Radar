@@ -116,8 +116,8 @@ export function SocketProvider({ children }) {
     checkInitialNewAlerts();
     requestNotificationPermission();
 
-    // Polling de respaldo cada 6 segundos para garantizar sincronización de la campanita
-    const pollInterval = setInterval(checkInitialNewAlerts, 6000);
+    // Polling de respaldo secundario (Socket.IO maneja el tiempo real principal)
+    const pollInterval = setInterval(checkInitialNewAlerts, 25000);
 
     // Inicializar conexión Socket.IO con el backend
     const newSocket = io(API_BASE, {
