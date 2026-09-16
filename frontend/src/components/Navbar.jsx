@@ -120,9 +120,9 @@ export default function Navbar() {
           <NavItem path="/terminales" icon={Server} label="Terminales" />
           <NavItem path="/mapa" icon={Map} label="Mapa" />
           <NavItem path="/alertas" icon={BellRing} label="Alertas" />
-          <NavItem path="/configuracion" icon={Settings} label="Configuración" mobileLabel="Ajustes" />
           {isAdmin && <NavItem path="/base-de-datos" icon={Database} label="Base de Datos" mobileLabel="DB" />}
           {isAdmin && <NavItem path="/colaboradores" icon={Users} label="Colaboradores" mobileLabel="Equipo" />}
+          <NavItem path="/configuracion" icon={Settings} label="Configuración" mobileLabel="Ajustes" />
         </div>
 
         {/* Barra sutil separadora entre los módulos y los botones de funcionalidad */}
