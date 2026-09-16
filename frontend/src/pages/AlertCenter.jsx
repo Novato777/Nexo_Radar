@@ -350,7 +350,7 @@ export default function AlertCenter() {
               <span style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '700' }}>Todas</span>
               <Bell size={18} color="var(--color-text-secondary)" />
             </div>
-            <div style={{ fontSize: '1.7rem', fontWeight: '800', color: 'var(--color-text-primary)' }}>{totalCount}</div>
+            <div style={{ fontSize: '1.7rem', fontWeight: '800', color: 'var(--color-text-primary)' }}><span>{totalCount}</span></div>
           </div>
 
           {/* Nuevas */}
@@ -366,7 +366,7 @@ export default function AlertCenter() {
               <ShieldAlert size={18} color="#ef4444" />
             </div>
             <div style={{ fontSize: '1.7rem', fontWeight: '800', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {newCount}
+              <span>{newCount}</span>
               {newCount > 0 && (
                 <span className="alert-dot-pulse-red" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }}></span>
               )}
@@ -385,7 +385,7 @@ export default function AlertCenter() {
               <span style={{ fontSize: '0.78rem', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '700' }}>En Proceso</span>
               <Clock size={18} color="#f59e0b" />
             </div>
-            <div style={{ fontSize: '1.7rem', fontWeight: '800', color: '#f59e0b' }}>{inProgressCount}</div>
+            <div style={{ fontSize: '1.7rem', fontWeight: '800', color: '#f59e0b' }}><span>{inProgressCount}</span></div>
           </div>
 
           {/* Resueltas */}
@@ -400,7 +400,7 @@ export default function AlertCenter() {
               <span style={{ fontSize: '0.78rem', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '700' }}>Resueltas</span>
               <CheckCircle2 size={18} color="#10b981" />
             </div>
-            <div style={{ fontSize: '1.7rem', fontWeight: '800', color: '#10b981' }}>{resolvedCount}</div>
+            <div style={{ fontSize: '1.7rem', fontWeight: '800', color: '#10b981' }}><span>{resolvedCount}</span></div>
           </div>
         </div>
 
@@ -430,10 +430,10 @@ export default function AlertCenter() {
           {/* Filtros por pestaña adaptados para no desbordar en móvil */}
           <div className="alert-filter-tabs">
             {[
-              { id: 'ALL', label: `Todas (${totalCount})`, short: `Todas (${totalCount})` },
-              { id: 'NUEVA', label: `Nuevas (${newCount})`, short: `Nuevas (${newCount})` },
-              { id: 'EN PROCESO', label: `En Proceso (${inProgressCount})`, short: `Proceso (${inProgressCount})` },
-              { id: 'RESUELTA', label: `Resueltas (${resolvedCount})`, short: `Resueltas (${resolvedCount})` },
+              { id: 'ALL', name: 'Todas', short: 'Todas', count: totalCount },
+              { id: 'NUEVA', name: 'Nuevas', short: 'Nuevas', count: newCount },
+              { id: 'EN PROCESO', name: 'En Proceso', short: 'Proceso', count: inProgressCount },
+              { id: 'RESUELTA', name: 'Resueltas', short: 'Resueltas', count: resolvedCount },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -447,8 +447,8 @@ export default function AlertCenter() {
                   transition: 'all 0.2s'
                 }}
               >
-                <span className="tab-label-desktop">{tab.label}</span>
-                <span className="tab-label-mobile">{tab.short}</span>
+                <span className="tab-label-desktop">{tab.name} (<span>{tab.count}</span>)</span>
+                <span className="tab-label-mobile">{tab.short} (<span>{tab.count}</span>)</span>
               </button>
             ))}
           </div>
@@ -623,18 +623,18 @@ export default function AlertCenter() {
             {/* Pestañas de Estado (Alineadas estrictamente en 1 sola línea en Android y móvil) */}
             <div className="alert-filter-tabs-modal">
               {[
-                { id: 'ALL', label: `Todas (${totalCount})`, mobileLabel: `Todas (${totalCount})` },
-                { id: 'NUEVA', label: `Nuevas (${newCount})`, mobileLabel: `Nuevas (${newCount})` },
-                { id: 'EN PROCESO', label: `En Proceso (${inProgressCount})`, mobileLabel: `Proceso (${inProgressCount})` },
-                { id: 'RESUELTA', label: `Resueltas (${resolvedCount})`, mobileLabel: `Resueltas (${resolvedCount})` },
+                { id: 'ALL', name: 'Todas', mobileLabel: 'Todas', count: totalCount },
+                { id: 'NUEVA', name: 'Nuevas', mobileLabel: 'Nuevas', count: newCount },
+                { id: 'EN PROCESO', name: 'En Proceso', mobileLabel: 'Proceso', count: inProgressCount },
+                { id: 'RESUELTA', name: 'Resueltas', mobileLabel: 'Resueltas', count: resolvedCount },
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveFilter(tab.id)}
                   className={`alert-modal-tab-btn ${activeFilter === tab.id ? 'active' : ''}`}
                 >
-                  <span className="tab-label-desktop">{tab.label}</span>
-                  <span className="tab-label-mobile">{tab.mobileLabel}</span>
+                  <span className="tab-label-desktop">{tab.name} (<span>{tab.count}</span>)</span>
+                  <span className="tab-label-mobile">{tab.mobileLabel} (<span>{tab.count}</span>)</span>
                 </button>
               ))}
             </div>
