@@ -799,9 +799,9 @@ export default function RadarMap() {
               padding: 11px 36px 11px 40px;
             }
             /* Ubicación y tamaño ergonómico de controles de zoom en Android / móvil sobre la barra inferior */
-            .leaflet-bottom.leaflet-right {
-              bottom: 80px !important;
-              right: 14px !important;
+            .leaflet-bottom.leaflet-left {
+              bottom: 120px !important; /* Se posiciona arriba de la leyenda en móvil */
+              left: 14px !important;
             }
             .leaflet-control-zoom {
               border-radius: 12px !important;
@@ -891,7 +891,7 @@ export default function RadarMap() {
           style={{ height: '100%', width: '100%' }}
           className="dark-map"
         >
-          <ZoomControl position="bottomright" />
+          <ZoomControl position="bottomleft" />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
