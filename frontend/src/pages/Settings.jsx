@@ -39,7 +39,7 @@ export default function Settings() {
             <SettingsIcon size={32} color="var(--color-accent)" style={{ animation: 'spin-slow 10s linear infinite' }} />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '2.2rem', fontWeight: '800', letterSpacing: '-0.02em', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <h1 style={{ margin: 0, fontSize: '2.2rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
               Configuración de Cuenta
             </h1>
             <p style={{ margin: '4px 0 0 0', color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
@@ -52,24 +52,24 @@ export default function Settings() {
         <div style={{
           background: 'var(--color-surface)',
           borderRadius: '20px',
-          border: '1px solid rgba(255, 255, 255, 0.06)',
+          border: '1px solid rgba(139, 92, 246, 0.1)',
           padding: '32px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)',
           position: 'relative',
           overflow: 'hidden'
         }}>
           {/* Brillo de fondo sutil */}
           <div style={{ position: 'absolute', top: 0, right: 0, width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.04) 0%, transparent 70%)', pointerEvents: 'none' }}></div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', borderBottom: '1px solid rgba(139, 92, 246, 0.1)', paddingBottom: '16px' }}>
             <div style={{ background: 'rgba(16, 185, 129, 0.15)', padding: '8px', borderRadius: '10px', display: 'flex' }}>
               <ShieldCheck size={24} color="#10b981" />
             </div>
-            <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700', color: '#f8fafc' }}>Seguridad y Sesión Local</h2>
+            <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700', color: 'var(--color-text-primary)' }}>Seguridad y Sesión Local</h2>
           </div>
 
           <div style={{ marginBottom: '32px', maxWidth: '600px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: '600', color: 'var(--color-text-primary)', marginBottom: '10px' }}>
               <Clock size={18} color="var(--color-accent)" />
               Tiempo máximo de sesión inactiva (Auto-cierre)
             </label>
@@ -86,14 +86,14 @@ export default function Settings() {
                   width: '100%',
                   padding: '16px 20px',
                   borderRadius: '12px',
-                  background: 'rgba(15, 23, 42, 0.95)',
+                  background: 'var(--color-bg)',
                   border: '1px solid rgba(6, 182, 212, 0.4)',
-                  color: '#f8fafc',
+                  color: 'var(--color-text-primary)',
                   fontSize: '1rem',
                   outline: 'none',
                   cursor: 'pointer',
                   appearance: 'none',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                   transition: 'all 0.2s ease',
                   backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2306b6d4%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E")',
                   backgroundRepeat: 'no-repeat',
@@ -101,7 +101,7 @@ export default function Settings() {
                   backgroundSize: '14px auto'
                 }}
                 onFocus={(e) => e.target.style.boxShadow = '0 0 0 3px rgba(6, 182, 212, 0.2)'}
-                onBlur={(e) => e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+                onBlur={(e) => e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'}
               >
                 <option value="900000">15 minutos</option>
                 <option value="1800000">30 minutos</option>
