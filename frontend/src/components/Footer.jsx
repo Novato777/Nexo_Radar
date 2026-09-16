@@ -10,8 +10,8 @@ import {
   SiNodedotjs,
   SiExpress,
   SiPostgresql,
-  SiSocketdotio,
-  SiLeaflet,
+  SiMongodb,
+  SiVercel,
   SiRender,
   SiCloudinary,
   SiGit,
@@ -23,9 +23,9 @@ import {
 
 const nav = [
   { label: "Inicio", href: "#inicio" },
-  { label: "Misión Control", href: "#telemetria" },
-  { label: "Simulador QR", href: "#ecosistema" },
-  { label: "Arquitectura", href: "#arquitectura" },
+  { label: "Servicios", href: "#servicios" },
+  { label: "Servicio Técnico", href: "#servicio-tecnico" },
+  { label: "Portafolio", href: "#portafolio" },
   { label: "Contacto", href: "#contacto" },
 ]
 
@@ -38,8 +38,8 @@ const techLogos = [
   { node: <SiNodedotjs />, title: "Node.js", href: "https://nodejs.org" },
   { node: <SiExpress />, title: "Express", href: "https://expressjs.com" },
   { node: <SiPostgresql />, title: "PostgreSQL", href: "https://www.postgresql.org" },
-  { node: <SiSocketdotio />, title: "Socket.io", href: "https://socket.io" },
-  { node: <SiLeaflet />, title: "Leaflet", href: "https://leafletjs.com" },
+  { node: <SiMongodb />, title: "MongoDB", href: "https://www.mongodb.com" },
+  { node: <SiVercel />, title: "Vercel", href: "https://vercel.com" },
   { node: <SiRender />, title: "Render", href: "https://render.com" },
   { node: <SiCloudinary />, title: "Cloudinary", href: "https://cloudinary.com" },
   { node: <SiGit />, title: "Git", href: "https://git-scm.com" },
@@ -50,11 +50,11 @@ const techLogos = [
 ]
 
 const services = [
-  "Radar Satelital en Vivo",
-  "Alertas Subsegundo",
-  "Terminales Físicas QR",
-  "Autenticación Zero-Trust",
-  "PWA & Pantalla Bloqueada",
+  "Páginas web",
+  "Sistemas a medida",
+  "Automatizaciones",
+  "Servicio técnico: Computadores",
+  "Servicio técnico: Impresoras",
 ]
 
 export default function Footer() {
@@ -79,7 +79,7 @@ export default function Footer() {
             scaleOnHover
             fadeOut
             fadeOutColor="#060912"
-            ariaLabel="Tecnologías que usamos en NeXo Radar"
+            ariaLabel="Tecnologías que usamos en NeXo"
           />
         </div>
       </div>
@@ -89,13 +89,14 @@ export default function Footer() {
           {/* Marca */}
           <div className="lg:col-span-1">
             <a href="#inicio" className="flex items-center gap-3">
-              <Logo size={56} />
+              <Logo size={80} />
               <span className="text-4xl font-bold tracking-tight">
-                Ne<span className="text-gradient">X</span>o Radar
+                Ne<span className="text-gradient">X</span>o
               </span>
             </a>
             <p className="mt-5 max-w-xs text-base leading-relaxed text-nexo-muted">
-              {site.slogan}
+              {site.slogan} Desarrollo de software y web para negocios que
+              quieren crecer.
             </p>
           </div>
 
@@ -170,7 +171,7 @@ export default function Footer() {
       {/* Barra inferior */}
       <div className="border-t border-nexo-border">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-base text-nexo-muted sm:flex-row">
-          <p>© 2026 {site.name}. Todos los derechos reservados.</p>
+          <p>© 2026 NeXo. Todos los derechos reservados.</p>
           <p>
             Diseñado y desarrollado por{" "}
             <span className="font-medium text-nexo-text">{site.developer}</span>
