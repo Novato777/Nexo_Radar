@@ -1,14 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Building2, MapPin, Phone, Trash2, Plus, QrCode, 
   AlertTriangle, ShieldCheck, Folder, ArrowLeft, 
   ExternalLink, Copy, Check, Search, Radio, Layers, 
-  ChevronRight, Sparkles, X
+  ChevronRight, Sparkles, X, Camera, Loader2, Edit3,
+  Navigation, UploadCloud, User
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import Modal from '../components/Modal';
 import { API_BASE, getLogoUrl } from '../config';
+
+// Icono personalizado para el picker en el modal de edición
+const editPickerIcon = new L.Icon({
+  iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+
+function EditLocationPicker({ position, setPosition }) {
+  useMapEvents({
+    click(e) {
+      setPosition(e.latlng);
+    },
+  });
+  return position === null ? null : (
+    <Marker position={position} icon={editPickerIcon}></Marker>
+  );
+}
+
+function EditMapController({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center, 14, { animate: true, duration: 0.6 });
+    }
+  }, [center, map]);
+  return null;
+}
 
 export default function Dashboard() {
   const [businesses, setBusinesses] = useState([]);
@@ -21,6 +53,150 @@ export default function Dashboard() {
   
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [businessToDelete, setBusinessToDelete] = useState(null);
+
+  // Estado para cambio directo de foto/logo
+  const fileInputRef = useRef(null);
+  const [selectedBusinessForLogo, setSelectedBusinessForLogo] = useState(null);
+  const [uploadingLogoId, setUploadingLogoId] = useState(null);
+
+  // Estado para Modal de Edición Completa
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingBusiness, setEditingBusiness] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    business_name: '',
+    owner_name: '',
+    phone: '',
+    city: '',
+    address: '',
+    qr_token: ''
+  });
+  const [editPosition, setEditPosition] = useState(null);
+  const [editMapCenter, setEditMapCenter] = useState([4.6097, -74.0817]);
+  const [editFile, setEditFile] = useState(null);
+  const [editPreviewUrl, setEditPreviewUrl] = useState(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const editFileInputRef = useRef(null);
+
+  const openEditModal = (business, e) => {
+    if (e) e.stopPropagation();
+    setEditingBusiness(business);
+    setEditFormData({
+      business_name: business.business_name || '',
+      owner_name: business.owner_name || '',
+      phone: business.phone || '',
+      city: business.city || '',
+      address: business.address || '',
+      qr_token: business.qr_token || ''
+    });
+
+    const lat = business.latitude ? parseFloat(business.latitude) : null;
+    const lng = business.longitude ? parseFloat(business.longitude) : null;
+    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+      setEditPosition({ lat, lng });
+      setEditMapCenter([lat, lng]);
+    } else {
+      setEditPosition(null);
+      setEditMapCenter([4.6097, -74.0817]);
+    }
+
+    setEditFile(null);
+    setEditPreviewUrl(business.logo_url ? getLogoUrl(business.logo_url) : null);
+    setEditError('');
+    setEditModalOpen(true);
+  };
+
+  const handleEditChange = (e) => {
+    setEditFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleEditFileChange = (e) => {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      setEditFile(selected);
+      setEditPreviewUrl(URL.createObjectURL(selected));
+    }
+  };
+
+  const handleUseCurrentLocationForEdit = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setEditPosition(coords);
+        setEditMapCenter([coords.lat, coords.lng]);
+      },
+      (err) => console.debug('GPS error:', err),
+      { enableHighAccuracy: true }
+    );
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingBusiness) return;
+    setEditSaving(true);
+    setEditError('');
+
+    const data = new FormData();
+    Object.keys(editFormData).forEach(key => data.append(key, editFormData[key]));
+    if (editFile) {
+      data.append('logo', editFile);
+    }
+    if (editPosition) {
+      data.append('latitude', editPosition.lat);
+      data.append('longitude', editPosition.lng);
+    }
+
+    try {
+      const res = await axios.put(`${API_BASE}/api/businesses/${editingBusiness.id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (res.data?.business) {
+        setBusinesses(prev => prev.map(b => b.id === editingBusiness.id ? res.data.business : b));
+        setEditModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Error al actualizar negocio:', err);
+      setEditError(err.response?.data?.error || 'Error al actualizar los datos del negocio.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleOpenLogoPicker = (business, e) => {
+    e.stopPropagation();
+    setSelectedBusinessForLogo(business);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleLogoFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedBusinessForLogo) return;
+
+    setUploadingLogoId(selectedBusinessForLogo.id);
+    const formData = new FormData();
+    formData.append('logo', file);
+
+    try {
+      const res = await axios.patch(`${API_BASE}/api/businesses/${selectedBusinessForLogo.id}/logo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (res.data?.business) {
+        setBusinesses(prev => prev.map(b => b.id === selectedBusinessForLogo.id ? res.data.business : b));
+      }
+    } catch (err) {
+      console.error('Error actualizando logo:', err);
+      alert(err.response?.data?.error || 'Error al actualizar el logotipo del negocio');
+    } finally {
+      setUploadingLogoId(null);
+      setSelectedBusinessForLogo(null);
+    }
+  };
 
   useEffect(() => {
     axios.get(`${API_BASE}/api/businesses`)
@@ -424,6 +600,234 @@ export default function Dashboard() {
         </div>
       </Modal>
 
+      {/* MODAL: EDITAR INFORMACIÓN COMPLETA DEL NODO */}
+      <Modal 
+        isOpen={editModalOpen} 
+        onClose={() => !editSaving && setEditModalOpen(false)} 
+        title={`Editar Nodo: ${editingBusiness?.business_name || 'Comercio'}`}
+        maxWidth="720px"
+      >
+        <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '10px 0' }}>
+          
+          {editError && (
+            <div style={{ padding: '10px 14px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#f87171', fontSize: '0.85rem' }}>
+              {editError}
+            </div>
+          )}
+
+          {/* Subir / Cambiar Logo */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--color-text-secondary)', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Logotipo / Foto del Comercio
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div 
+                onClick={() => editFileInputRef.current?.click()}
+                style={{
+                  width: '80px', height: '80px', borderRadius: '16px', border: '2px dashed var(--color-accent)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                  background: 'rgba(6, 182, 212, 0.05)', overflow: 'hidden', position: 'relative'
+                }}
+              >
+                {editPreviewUrl ? (
+                  <img src={editPreviewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <UploadCloud size={24} color="var(--color-accent)" />
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <button 
+                  type="button" 
+                  className="btn-secondary" 
+                  onClick={() => editFileInputRef.current?.click()}
+                  style={{ padding: '8px 14px', fontSize: '0.82rem', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}
+                >
+                  <Camera size={14} />
+                  <span>{editPreviewUrl ? 'Cambiar Foto' : 'Subir Foto'}</span>
+                </button>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                  Formatos PNG, JPG o WEBP. Se optimizará y guardará en Cloudinary CDN.
+                </p>
+                <input 
+                  type="file" 
+                  ref={editFileInputRef} 
+                  onChange={handleEditFileChange} 
+                  accept="image/*" 
+                  style={{ display: 'none' }} 
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Campos en dos columnas */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                Nombre del Comercio *
+              </label>
+              <input 
+                type="text" 
+                name="business_name" 
+                required 
+                className="input-styled" 
+                value={editFormData.business_name} 
+                onChange={handleEditChange} 
+                style={{ width: '100%', height: '40px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                Propietario / Contacto
+              </label>
+              <input 
+                type="text" 
+                name="owner_name" 
+                className="input-styled" 
+                value={editFormData.owner_name} 
+                onChange={handleEditChange} 
+                style={{ width: '100%', height: '40px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                Teléfono WhatsApp *
+              </label>
+              <input 
+                type="text" 
+                name="phone" 
+                required 
+                className="input-styled" 
+                value={editFormData.phone} 
+                onChange={handleEditChange} 
+                style={{ width: '100%', height: '40px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                Código Token QR *
+              </label>
+              <input 
+                type="text" 
+                name="qr_token" 
+                required 
+                className="input-styled" 
+                value={editFormData.qr_token} 
+                onChange={handleEditChange} 
+                style={{ width: '100%', height: '40px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-accent)' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                Ciudad / Municipio *
+              </label>
+              <input 
+                type="text" 
+                name="city" 
+                required 
+                className="input-styled" 
+                value={editFormData.city} 
+                onChange={handleEditChange} 
+                style={{ width: '100%', height: '40px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                Dirección Física
+              </label>
+              <input 
+                type="text" 
+                name="address" 
+                className="input-styled" 
+                value={editFormData.address} 
+                onChange={handleEditChange} 
+                style={{ width: '100%', height: '40px' }}
+              />
+            </div>
+          </div>
+
+          {/* Selector de Mapa GPS */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
+                Ubicación Satelital (Radar GPS)
+              </label>
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                onClick={handleUseCurrentLocationForEdit}
+                style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <Navigation size={12} />
+                <span>Mi GPS</span>
+              </button>
+            </div>
+
+            <div style={{ height: '220px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(6, 182, 212, 0.3)', position: 'relative' }}>
+              <MapContainer 
+                center={editMapCenter} 
+                zoom={14} 
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  attribution='&copy; OpenStreetMap'
+                />
+                <EditLocationPicker position={editPosition} setPosition={setEditPosition} />
+                <EditMapController center={editMapCenter} />
+              </MapContainer>
+            </div>
+
+            <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+              <span>
+                {editPosition 
+                  ? `Lat: ${editPosition.lat.toFixed(5)}, Lng: ${editPosition.lng.toFixed(5)}`
+                  : '⚠️ Sin coordenadas fijadas. Haz clic en el mapa para marcar el punto.'}
+              </span>
+              <span style={{ color: 'var(--color-accent)', fontWeight: '600' }}>
+                Haz clic en el mapa para mover el pin
+              </span>
+            </div>
+          </div>
+
+          {/* Botones de acción del Modal */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <button 
+              type="button" 
+              className="btn-secondary" 
+              onClick={() => setEditModalOpen(false)}
+              disabled={editSaving}
+              style={{ padding: '10px 18px', borderRadius: '10px' }}
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={editSaving}
+              style={{ padding: '10px 22px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '8px', fontWeight: '700' }}
+            >
+              {editSaving && <Loader2 size={16} className="animate-spin" />}
+              <span>{editSaving ? 'Guardando...' : 'Guardar Cambios'}</span>
+            </button>
+          </div>
+
+        </form>
+      </Modal>
+
+      {/* Input oculto para subir nueva foto a comercios existentes */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleLogoFileChange} 
+        accept="image/*" 
+        style={{ display: 'none' }} 
+      />
+
     </div>
   );
 
@@ -466,20 +870,50 @@ export default function Dashboard() {
 
           {/* Encabezado con Logo Ampliado y Título Legible */}
           <div className="terminal-header" style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {business.logo_url ? (
-              <div className="terminal-logo-container" style={{ position: 'relative', width: '62px', height: '62px', flexShrink: 0 }}>
+            <div 
+              className="terminal-logo-container" 
+              style={{ position: 'relative', width: '62px', height: '62px', flexShrink: 0, cursor: 'pointer' }}
+              onClick={(e) => handleOpenLogoPicker(business, e)}
+              title="Haz clic para cambiar o subir foto a Cloudinary"
+            >
+              {business.logo_url ? (
                 <img 
                   src={getLogoUrl(business.logo_url)} 
                   alt={business.business_name} 
                   onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                   style={{ width: '62px', height: '62px', borderRadius: '16px', objectFit: 'cover', border: '2.5px solid rgba(6,182,212,0.4)', boxShadow: '0 6px 18px rgba(0,0,0,0.35)', display: 'block' }} 
                 />
+              ) : (
+                <div style={{ width: '62px', height: '62px', borderRadius: '16px', background: 'rgba(6,182,212,0.12)', border: '1.5px solid rgba(6,182,212,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Building2 size={30} color="var(--color-accent)" />
+                </div>
+              )}
+
+              {/* Botón flotante para cambiar foto */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  bottom: '-4px',
+                  right: '-4px',
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: 'var(--color-accent, #06b6d4)',
+                  color: '#020617',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
+                  border: '2px solid #0f172a'
+                }}
+              >
+                {uploadingLogoId === business.id ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Camera size={13} />
+                )}
               </div>
-            ) : (
-              <div className="terminal-logo-container" style={{ width: '62px', height: '62px', borderRadius: '16px', background: 'rgba(6,182,212,0.12)', border: '1.5px solid rgba(6,182,212,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Building2 size={30} color="var(--color-accent)" />
-              </div>
-            )}
+            </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <h3 style={{ margin: '0 0 5px 0', fontSize: '1.15rem', color: 'var(--color-text-primary)', fontWeight: '700', lineHeight: '1.35', wordBreak: 'break-word' }}>
@@ -517,6 +951,47 @@ export default function Dashboard() {
 
           {/* Acciones Rápidas con Botones Anclados y Mejor Estilo */}
           <div className="terminal-actions-footer" style={{ marginTop: 'auto', padding: '14px 18px', background: 'rgba(0,0,0,0.25)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            
+            {/* Fila 1: Botones de Gestión (Editar y Ver en Radar) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <button
+                onClick={(e) => openEditModal(business, e)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                  height: '38px', padding: '0 10px',
+                  background: 'rgba(6, 182, 212, 0.12)', color: 'var(--color-accent)',
+                  border: '1px solid rgba(6, 182, 212, 0.35)', borderRadius: '10px',
+                  cursor: 'pointer', fontSize: '0.84rem', fontWeight: '700',
+                  transition: 'all 0.2s ease', whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.25)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.12)'; e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.35)'; }}
+                title="Editar información, foto y ubicación GPS"
+              >
+                <Edit3 size={15} />
+                <span>Editar Nodo</span>
+              </button>
+
+              <button
+                onClick={() => navigate(`/mapa?focus=${business.id}`)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                  height: '38px', padding: '0 10px',
+                  background: 'rgba(255, 255, 255, 0.05)', color: 'var(--color-text-primary)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px',
+                  cursor: 'pointer', fontSize: '0.84rem', fontWeight: '600',
+                  transition: 'all 0.2s ease', whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                title="Localizar en el radar satelital en vivo"
+              >
+                <Navigation size={14} color="var(--color-accent)" />
+                <span>Ver en Radar</span>
+              </button>
+            </div>
+
+            {/* Fila 2: Portal QR y Copiar URL */}
             <div className="terminal-btn-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               {/* Abrir Portal QR */}
               <a

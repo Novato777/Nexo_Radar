@@ -610,6 +610,31 @@ export default function RadarMap() {
     setSuggestions([]);
   };
 
+  // Búsqueda instantánea de comercios registrados en el radar
+  const matchingBusinesses = searchQuery.trim().length > 1
+    ? businesses.filter(b => {
+        const q = searchQuery.toLowerCase().trim();
+        const lat = parseFloat(b.latitude);
+        const lng = parseFloat(b.longitude);
+        if (isNaN(lat) || isNaN(lng)) return false;
+        return (
+          (b.business_name || '').toLowerCase().includes(q) ||
+          (b.city || '').toLowerCase().includes(q) ||
+          (b.qr_token || '').toLowerCase().includes(q)
+        );
+      }).slice(0, 5)
+    : [];
+
+  const handleSelectBusiness = (biz) => {
+    const lat = parseFloat(biz.latitude);
+    const lon = parseFloat(biz.longitude);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      setMapCenter([lat, lon]);
+      setSearchQuery('');
+      setSuggestions([]);
+    }
+  };
+
   // Determinar el estado prioritario de alerta de un comercio
   const getBusinessAlertState = (businessId) => {
     const bizRequests = requests.filter(r => r.business_id === businessId);
@@ -660,21 +685,43 @@ export default function RadarMap() {
             className="map-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar ciudad en el mapa..." 
+            placeholder="Buscar ciudad o comercio registrado..." 
           />
           {searching && <Loader2 size={18} className="animate-spin" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)' }} />}
         </div>
         
-        {/* Sugerencias */}
-        {suggestions.length > 0 && (
+        {/* Sugerencias: Comercios Registrados y Ciudades */}
+        {(matchingBusinesses.length > 0 || suggestions.length > 0) && (
           <ul className="map-search-suggestions">
+            {matchingBusinesses.map(biz => (
+              <li 
+                key={`biz-${biz.id}`} 
+                onClick={() => handleSelectBusiness(biz)}
+                className="map-search-suggestion-item"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                  <Building2 size={15} color="var(--color-accent)" style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: '700', color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {biz.business_name}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                    ({biz.city || 'Nodo'})
+                  </span>
+                </div>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--color-accent)', background: 'rgba(6,182,212,0.12)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(6,182,212,0.25)' }}>
+                  #{biz.qr_token}
+                </span>
+              </li>
+            ))}
+
             {suggestions.map((sug, idx) => (
               <li 
-                key={idx} 
+                key={`city-${idx}`} 
                 onClick={() => handleSelectCity(sug)}
                 className="map-search-suggestion-item"
               >
-                {sug.display_name}
+                📍 {sug.display_name}
               </li>
             ))}
           </ul>
@@ -918,7 +965,9 @@ export default function RadarMap() {
           )}
           
           {businesses.map(biz => {
-            if (!biz.latitude || !biz.longitude) return null;
+            const lat = parseFloat(biz.latitude);
+            const lng = parseFloat(biz.longitude);
+            if (isNaN(lat) || isNaN(lng)) return null;
             
             const { status: alertStatus, alert } = getBusinessAlertState(biz.id);
             const customMarker = createCustomIcon(biz.logo_url, alertStatus, alert?.attended_by);

@@ -143,6 +143,86 @@ router.patch('/:id/logo', upload.single('logo'), async (req, res) => {
   }
 });
 
+// PUT /api/businesses/:id
+// Actualiza la información completa de un comercio (incluyendo opcionalmente logo y coordenadas)
+router.put('/:id', upload.single('logo'), async (req, res) => {
+  const { id } = req.params;
+  const { business_name, owner_name, phone, city, address, latitude, longitude, qr_token } = req.body;
+
+  try {
+    const currentRes = await db.query('SELECT * FROM businesses WHERE id = $1', [id]);
+    if (currentRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Comercio no encontrado' });
+    }
+    const currentBiz = currentRes.rows[0];
+
+    // Si viene nuevo archivo de imagen para logo, subir a Cloudinary
+    let logo_url = currentBiz.logo_url;
+    if (req.file && req.file.buffer) {
+      try {
+        logo_url = await uploadImage(req.file.buffer, req.file.originalname, 'nexo_radar/logos');
+      } catch (uploadErr) {
+        console.error('[Error subiendo logo en edición]:', uploadErr);
+      }
+    }
+
+    // Parseo seguro de coordenadas
+    const parseCoord = (val, defaultVal) => {
+      if (val === undefined || val === null || val === '' || val === 'null') return defaultVal;
+      const num = parseFloat(val);
+      return isNaN(num) ? defaultVal : num;
+    };
+
+    const lat = parseCoord(latitude, currentBiz.latitude);
+    const lng = parseCoord(longitude, currentBiz.longitude);
+
+    const result = await db.query(
+      `UPDATE businesses 
+       SET business_name = $1, 
+           owner_name = $2, 
+           phone = $3, 
+           city = $4, 
+           address = $5, 
+           latitude = $6, 
+           longitude = $7, 
+           qr_token = $8, 
+           logo_url = $9, 
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $10 
+       RETURNING *`,
+      [
+        business_name !== undefined ? business_name : currentBiz.business_name,
+        owner_name !== undefined ? owner_name : currentBiz.owner_name,
+        phone !== undefined ? phone : currentBiz.phone,
+        city !== undefined ? city : currentBiz.city,
+        address !== undefined ? address : currentBiz.address,
+        lat,
+        lng,
+        qr_token !== undefined ? qr_token.trim() : currentBiz.qr_token,
+        logo_url,
+        id
+      ]
+    );
+
+    const updatedBusiness = result.rows[0];
+
+    // Emitir cambio a la flota en tiempo real
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('business_data_changed', { action: 'updated', business: updatedBusiness });
+    }
+
+    res.json({ success: true, business: updatedBusiness });
+  } catch (error) {
+    console.error('[Error al actualizar comercio]:', error);
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'El código QR ingresado ya está asignado a otro comercio registrado.' });
+    }
+    res.status(500).json({ error: 'Error al actualizar el negocio' });
+  }
+});
+
 module.exports = router;
+
 
 
