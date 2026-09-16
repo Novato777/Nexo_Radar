@@ -178,28 +178,48 @@ export default function Dashboard() {
     setEditSaving(true);
     setEditError('');
 
-    const data = new FormData();
-    Object.keys(editFormData).forEach(key => data.append(key, editFormData[key]));
-    if (editFile) {
-      data.append('logo', editFile);
-    }
-    if (editPosition) {
-      data.append('latitude', editPosition.lat);
-      data.append('longitude', editPosition.lng);
-    }
-
     try {
-      const res = await axios.put(`${API_BASE}/api/businesses/${editingBusiness.id}`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      let res;
+      if (editFile) {
+        // Con imagen nueva: Usamos FormData sin cabeceras manuales para preservar el boundary de multer
+        const data = new FormData();
+        Object.keys(editFormData).forEach(key => {
+          if (editFormData[key] !== undefined && editFormData[key] !== null) {
+            data.append(key, editFormData[key]);
+          }
+        });
+        data.append('logo', editFile);
+        if (editPosition) {
+          data.append('latitude', editPosition.lat);
+          data.append('longitude', editPosition.lng);
+        }
+        res = await axios.put(`${API_BASE}/api/businesses/${editingBusiness.id}`, data);
+      } else {
+        // Sin imagen nueva: Enviamos JSON directo (más rápido, seguro y sin problemas de boundary multipart)
+        const payload = {
+          ...editFormData,
+          latitude: editPosition ? editPosition.lat : null,
+          longitude: editPosition ? editPosition.lng : null
+        };
+        res = await axios.put(`${API_BASE}/api/businesses/${editingBusiness.id}`, payload);
+      }
 
-      if (res.data?.business) {
-        setBusinesses(prev => prev.map(b => b.id === editingBusiness.id ? res.data.business : b));
+      const updated = res.data?.business || (res.data?.id ? res.data : null);
+      if (updated) {
+        setBusinesses(prev => prev.map(b => b.id === editingBusiness.id ? { ...b, ...updated } : b));
+        setEditModalOpen(false);
+        setEditingBusiness(null);
+        setEditFile(null);
+      } else {
+        // Si por alguna razón la respuesta no trajo objeto pero fue exitosa, refrescar lista
+        const ref = await axios.get(`${API_BASE}/api/businesses`);
+        if (Array.isArray(ref.data)) setBusinesses(ref.data);
         setEditModalOpen(false);
       }
     } catch (err) {
       console.error('Error al actualizar negocio:', err);
-      setEditError(err.response?.data?.error || 'Error al actualizar los datos del negocio.');
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || err.message;
+      setEditError(serverMsg || 'Error al actualizar los datos del negocio.');
     } finally {
       setEditSaving(false);
     }
@@ -223,12 +243,10 @@ export default function Dashboard() {
     formData.append('logo', file);
 
     try {
-      const res = await axios.patch(`${API_BASE}/api/businesses/${selectedBusinessForLogo.id}/logo`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      if (res.data?.business) {
-        setBusinesses(prev => prev.map(b => b.id === selectedBusinessForLogo.id ? res.data.business : b));
+      const res = await axios.patch(`${API_BASE}/api/businesses/${selectedBusinessForLogo.id}/logo`, formData);
+      const updated = res.data?.business || (res.data?.id ? res.data : null);
+      if (updated) {
+        setBusinesses(prev => prev.map(b => b.id === selectedBusinessForLogo.id ? { ...b, ...updated } : b));
       }
     } catch (err) {
       console.error('Error actualizando logo:', err);

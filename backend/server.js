@@ -40,7 +40,8 @@ app.use(helmet({
 
 app.use(cors({
   origin: '*',
-  methods: ['GET', 'POST', 'PATCH', 'DELETE']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 // Límites de tamaño de payload para evitar saturación de memoria

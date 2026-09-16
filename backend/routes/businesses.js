@@ -143,11 +143,27 @@ router.patch('/:id/logo', upload.single('logo'), async (req, res) => {
   }
 });
 
-// PUT /api/businesses/:id
-// Actualiza la información completa de un comercio (incluyendo opcionalmente logo y coordenadas)
-router.put('/:id', upload.single('logo'), async (req, res) => {
+// Middleware para procesar multipart solo si se adjunta archivo, o continuar si es JSON
+const optionalUploadLogo = (req, res, next) => {
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    upload.single('logo')(req, res, (err) => {
+      if (err) {
+        console.error('[Error de multer al procesar formulario]:', err);
+        return res.status(400).json({ error: `Error en la subida de imagen: ${err.message}` });
+      }
+      next();
+    });
+  } else {
+    next();
+  }
+};
+
+// Controlador unificado para PUT y PATCH /api/businesses/:id
+const updateBusinessHandler = async (req, res) => {
   const { id } = req.params;
-  const { business_name, owner_name, phone, city, address, latitude, longitude, qr_token } = req.body;
+  const body = req.body || {};
+  const { business_name, owner_name, phone, city, address, latitude, longitude, qr_token } = body;
 
   try {
     const currentRes = await db.query('SELECT * FROM businesses WHERE id = $1', [id]);
@@ -168,13 +184,41 @@ router.put('/:id', upload.single('logo'), async (req, res) => {
 
     // Parseo seguro de coordenadas
     const parseCoord = (val, defaultVal) => {
-      if (val === undefined || val === null || val === '' || val === 'null') return defaultVal;
+      if (val === undefined || val === null || val === '' || val === 'null') {
+        return (defaultVal !== undefined && defaultVal !== null && !isNaN(parseFloat(defaultVal)))
+          ? parseFloat(defaultVal)
+          : null;
+      }
       const num = parseFloat(val);
-      return isNaN(num) ? defaultVal : num;
+      if (isNaN(num)) {
+        return (defaultVal !== undefined && defaultVal !== null && !isNaN(parseFloat(defaultVal)))
+          ? parseFloat(defaultVal)
+          : null;
+      }
+      return num;
     };
 
     const lat = parseCoord(latitude, currentBiz.latitude);
     const lng = parseCoord(longitude, currentBiz.longitude);
+
+    // Parseo seguro de token QR
+    let finalQr = currentBiz.qr_token;
+    if (qr_token !== undefined && qr_token !== null) {
+      const str = String(qr_token).trim();
+      finalQr = str.length > 0 ? str : currentBiz.qr_token;
+    }
+
+    const finalBusinessName = (business_name !== undefined && String(business_name).trim()) 
+      ? String(business_name).trim() 
+      : currentBiz.business_name;
+    const finalOwnerName = owner_name !== undefined ? String(owner_name).trim() : currentBiz.owner_name;
+    const finalPhone = (phone !== undefined && String(phone).trim()) 
+      ? String(phone).trim() 
+      : currentBiz.phone;
+    const finalCity = (city !== undefined && String(city).trim()) 
+      ? String(city).trim() 
+      : currentBiz.city;
+    const finalAddress = address !== undefined ? String(address).trim() : currentBiz.address;
 
     const result = await db.query(
       `UPDATE businesses 
@@ -191,14 +235,14 @@ router.put('/:id', upload.single('logo'), async (req, res) => {
        WHERE id = $10 
        RETURNING *`,
       [
-        business_name !== undefined ? business_name : currentBiz.business_name,
-        owner_name !== undefined ? owner_name : currentBiz.owner_name,
-        phone !== undefined ? phone : currentBiz.phone,
-        city !== undefined ? city : currentBiz.city,
-        address !== undefined ? address : currentBiz.address,
+        finalBusinessName,
+        finalOwnerName,
+        finalPhone,
+        finalCity,
+        finalAddress,
         lat,
         lng,
-        qr_token !== undefined ? qr_token.trim() : currentBiz.qr_token,
+        finalQr,
         logo_url,
         id
       ]
@@ -218,9 +262,13 @@ router.put('/:id', upload.single('logo'), async (req, res) => {
     if (error.code === '23505') {
       return res.status(409).json({ error: 'El código QR ingresado ya está asignado a otro comercio registrado.' });
     }
-    res.status(500).json({ error: 'Error al actualizar el negocio' });
+    res.status(500).json({ error: error.message || 'Error al actualizar el negocio' });
   }
-});
+};
+
+// Soportar tanto PUT como PATCH para máxima compatibilidad con clientes y proxies
+router.put('/:id', optionalUploadLogo, updateBusinessHandler);
+router.patch('/:id', optionalUploadLogo, updateBusinessHandler);
 
 module.exports = router;
 
