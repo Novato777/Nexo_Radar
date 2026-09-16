@@ -687,15 +687,15 @@ export default function RadarMap() {
         </div>
         <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--color-text-primary)' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 6px #ef4444' }}></span>
-          <span>🔴 Nueva Alerta</span>
+          <span>Nueva Alerta</span>
         </div>
         <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--color-text-primary)' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 6px #f59e0b' }}></span>
-          <span>🟡 En Revisión</span>
+          <span>En Revisión</span>
         </div>
         <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--color-text-primary)' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }}></span>
-          <span>🟢 Resuelto / Seguro</span>
+          <span>Resuelto / Seguro</span>
         </div>
       </div>
 
