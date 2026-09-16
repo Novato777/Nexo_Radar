@@ -99,7 +99,13 @@ export default function useKeepAlive({
       const storedTime = localStorage.getItem('app_last_activity') || localStorage.getItem('nexo_last_activity');
       const lastActivity = parseInt(storedTime || '0', 10);
       
-      if (lastActivity && Date.now() - lastActivity > timeoutMs) {
+      const configTimeout = localStorage.getItem('nexo_session_timeout');
+      const activeTimeoutMs = configTimeout !== null ? parseInt(configTimeout, 10) : timeoutMs;
+      
+      // Si configuraron "0" (Sesión Permanente), evadimos la desconexión
+      if (activeTimeoutMs === 0) return;
+
+      if (lastActivity && Date.now() - lastActivity > activeTimeoutMs) {
         handleLogout('timeout');
       }
     };

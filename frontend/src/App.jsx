@@ -9,6 +9,7 @@ import RadarMap from './pages/RadarMap';
 import DatabaseView from './pages/DatabaseView';
 import SuperAdmin from './pages/SuperAdmin';
 import Landing from './pages/Landing';
+import Settings from './pages/Settings';
 import { SocketProvider } from './context/SocketContext';
 import './index.css';
 import 'leaflet/dist/leaflet.css';
@@ -59,6 +60,7 @@ function App() {
         <Route path="/register" element={<PrivateRoute><RegisterBusiness /></PrivateRoute>} />
         <Route path="/alertas" element={<PrivateRoute><AlertCenter /></PrivateRoute>} />
         <Route path="/mapa" element={<PrivateRoute><RadarMap /></PrivateRoute>} />
+        <Route path="/configuracion" element={<PrivateRoute><Settings /></PrivateRoute>} />
         
         {/* Rutas Restringidas Exclusivas de Administradores */}
         <Route path="/base-de-datos" element={<AdminRoute><DatabaseView /></AdminRoute>} />
