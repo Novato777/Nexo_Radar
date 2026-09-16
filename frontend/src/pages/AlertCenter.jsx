@@ -715,6 +715,7 @@ export default function AlertCenter() {
                           <img 
                             src={getLogoUrl(req.logo_url)} 
                             alt="" 
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                             style={{ width: '42px', height: '42px', borderRadius: '10px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}
                           />
                         ) : (

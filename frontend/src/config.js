@@ -9,7 +9,9 @@ export const getLogoUrl = (url) => {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  return `${API_BASE}${url}`;
+  const cleanBase = (API_BASE || '').replace(/\/+$/, '');
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  return `${cleanBase}${cleanPath}`;
 };
 
 /**

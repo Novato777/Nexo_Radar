@@ -104,5 +104,45 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/businesses/:id/logo
+// Actualiza únicamente la imagen o logotipo de un negocio existente
+router.patch('/:id/logo', upload.single('logo'), async (req, res) => {
+  const { id } = req.params;
+
+  if (!req.file || !req.file.buffer) {
+    return res.status(400).json({ error: 'Debes adjuntar un archivo de imagen en el campo "logo".' });
+  }
+
+  try {
+    const logo_url = await uploadImage(req.file.buffer, req.file.originalname, 'nexo_radar/logos');
+
+    const result = await db.query(
+      `UPDATE businesses 
+       SET logo_url = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 
+       RETURNING *`,
+      [logo_url, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Comercio no encontrado' });
+    }
+
+    const updatedBusiness = result.rows[0];
+
+    // Emitir cambio a la flota en tiempo real
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('business_data_changed', { action: 'updated', business: updatedBusiness });
+    }
+
+    res.json({ success: true, business: updatedBusiness });
+  } catch (error) {
+    console.error('[Error actualizando logo del negocio]:', error);
+    res.status(500).json({ error: 'Error al actualizar el logotipo del negocio' });
+  }
+});
+
 module.exports = router;
+
 

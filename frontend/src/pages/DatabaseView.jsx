@@ -985,6 +985,7 @@ export default function DatabaseView() {
                             <img 
                               src={getLogoUrl(business.logo_url)} 
                               alt="" 
+                              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                               style={{ width: '38px', height: '38px', borderRadius: '10px', objectFit: 'cover', background: '#111923', border: '1.5px solid rgba(6, 182, 212, 0.25)' }} 
                             />
                           ) : (
@@ -1122,6 +1123,7 @@ export default function DatabaseView() {
                       <img 
                         src={getLogoUrl(business.logo_url)} 
                         alt="" 
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                         style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'cover', border: '1.5px solid rgba(6, 182, 212, 0.3)' }} 
                       />
                     ) : (

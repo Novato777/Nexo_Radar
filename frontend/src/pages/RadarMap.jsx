@@ -138,6 +138,7 @@ function BusinessMarker({ biz, alertStatus, alert, onUpdateStatus, customMarker,
               <img 
                 src={getLogoUrl(biz.logo_url)} 
                 alt={biz.business_name} 
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                 style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} 
               />
             ) : (

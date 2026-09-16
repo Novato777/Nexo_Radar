@@ -345,6 +345,7 @@ export default function Dashboard() {
                             src={getLogoUrl(item.logo_url)} 
                             alt="" 
                             className="avatar-stack-item"
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                           />
                         ))}
                         {data.count > previewLogos.length && (
@@ -470,6 +471,7 @@ export default function Dashboard() {
                 <img 
                   src={getLogoUrl(business.logo_url)} 
                   alt={business.business_name} 
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                   style={{ width: '62px', height: '62px', borderRadius: '16px', objectFit: 'cover', border: '2.5px solid rgba(6,182,212,0.4)', boxShadow: '0 6px 18px rgba(0,0,0,0.35)', display: 'block' }} 
                 />
               </div>

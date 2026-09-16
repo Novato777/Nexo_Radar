@@ -1,0 +1,115 @@
+======================================================================
+  GUIA DE INSTALACION Y EJECUCION EN LINUX MINT - NeXo Radar
+======================================================================
+
+[!] PUNTO CRITICO: VERSION DE NODE.JS
+----------------------------------------------------------------------
+Linux Mint actualmente viene con Node.js v18.19.1 por defecto.
+Sin embargo, este proyecto usa Vite 8, Rolldown y React Router 7 en el
+frontend, los cuales requieren obligatoriamente Node.js >= 20.19.0 o >= 22.x.
+
+Si intentas correrlo con Node 18, fallará con:
+  "SyntaxError: The requested module 'node:util' does not provide an export named 'styleText'"
+
+Por eso, el primer paso indispensable es actualizar a Node 22 LTS.
+
+
+======================================================================
+PASO 1: ACTUALIZAR NODE.JS A LA VERSION LTS (NODE 22)
+======================================================================
+
+Opcion Recomendada (Usando NVM - Node Version Manager):
+-------------------------------------------------------
+1. Instalar NVM:
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+2. Recargar tu terminal:
+   source ~/.bashrc
+
+3. Instalar y activar Node.js 22 LTS:
+   nvm install 22
+   nvm use 22
+
+4. Verificar que tengas la version correcta:
+   node -v
+   npm -v
+
+Opcion Alternativa (A nivel de sistema mediante NodeSource):
+------------------------------------------------------------
+   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+
+
+======================================================================
+PASO 2: INSTALAR DEPENDENCIAS DEL BACKEND
+======================================================================
+Ejecutar en la terminal:
+
+   cd ~/Documentos/Repositorios/Nexo_Radar/backend
+   npm install
+
+
+======================================================================
+PASO 3: INSTALAR DEPENDENCIAS DEL FRONTEND
+======================================================================
+Ejecutar en la terminal:
+
+   cd ~/Documentos/Repositorios/Nexo_Radar/frontend
+   npm install
+
+
+======================================================================
+PASO 4: CONFIGURAR BASE DE DATOS Y VARIABLES DE ENTORNO (.env)
+======================================================================
+El archivo de configuracion se encuentra en:
+   backend/.env
+
+OPCION A (Recomendada si ya tienes Neon Database en la nube):
+-------------------------------------------------------------
+Edita backend/.env y coloca tu connection string con SSL:
+
+PORT=5000
+DATABASE_URL=postgresql://usuario:password@ep-xyz.neon.tech/neondb?sslmode=require
+MASTER_PASSWORD=nexo2026
+
+OPCION B (Base de datos local PostgreSQL en Linux Mint):
+--------------------------------------------------------
+1. Instalar el servicio PostgreSQL:
+   sudo apt update
+   sudo apt install -y postgresql postgresql-contrib
+   sudo systemctl start postgresql
+   sudo systemctl enable postgresql
+
+2. Crear la base de datos y cargar el esquema:
+   sudo -u postgres psql -c "CREATE DATABASE nexo_radar;"
+   sudo -u postgres psql -d nexo_radar -f ~/Documentos/Repositorios/Nexo_Radar/backend/database.sql
+
+3. Configurar backend/.env con los datos locales:
+   PORT=5000
+   DB_USER=postgres
+   DB_PASSWORD=tu_password_local
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=nexo_radar
+   MASTER_PASSWORD=nexo2026
+
+
+======================================================================
+PASO 5: EJECUTAR EL PROYECTO
+======================================================================
+Abre dos terminales (o dos pestañas):
+
+Terminal 1 - Servidor Backend (Express + WebSockets):
+-----------------------------------------------------
+   cd ~/Documentos/Repositorios/Nexo_Radar/backend
+   node server.js
+
+   (Debe mostrar: "[NeXo Radar Backend] Servidor seguro y Socket.IO escuchando en puerto 5000")
+
+Terminal 2 - Cliente Frontend (React + Vite):
+----------------------------------------------
+   cd ~/Documentos/Repositorios/Nexo_Radar/frontend
+   npm run dev
+
+   (Te mostrara el enlace local para abrir en el navegador, comunmente http://localhost:5173)
+======================================================================

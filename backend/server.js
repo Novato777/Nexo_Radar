@@ -102,6 +102,8 @@ app.get('/api', (req, res) => {
   res.json({ message: 'NeXo Radar API v1 - Protegida y en Tiempo Real' });
 });
 
+const { getCloudinaryStatus } = require('./config/cloudinary');
+
 // Endpoint de login compatible con frontend directo (/api/login y /api/auth/login)
 app.post('/api/login', authLimiter, authRoutes.handleLogin);
 
@@ -112,6 +114,11 @@ app.get('/api/status', (req, res) => {
     realtime: 'active',
     security: 'helmet+ratelimit' 
   });
+});
+
+// Endpoint diagnóstico de Cloudinary (ayuda a depurar despliegues en Render/Vercel)
+app.get('/api/health/cloudinary', (req, res) => {
+  res.json(getCloudinaryStatus());
 });
 
 // Manejador global de errores para no filtrar trazas sensibles en producción
@@ -127,5 +134,14 @@ app.use((err, req, res, next) => {
 // Start server
 server.listen(PORT, () => {
   console.log(`[NeXo Radar Backend] Servidor seguro y Socket.IO escuchando en puerto ${PORT}`);
+  const cStatus = getCloudinaryStatus();
+  if (cStatus.configured) {
+    console.log(`[Cloudinary CDN] Conectado exitosamente. Cloud Name: ${cStatus.cloud_name}`);
+  } else {
+    console.warn('[Cloudinary CDN] ⚠️ ADVERTENCIA: Cloudinary no está configurado.');
+    console.warn('[Cloudinary CDN] ⚠️ En producción (Render/Vercel), las imágenes se perderán al reiniciar el servidor.');
+    console.warn('[Cloudinary CDN] ⚠️ Configura CLOUDINARY_URL en las variables de entorno de Render para almacenamiento permanente.');
+  }
 });
+
 
