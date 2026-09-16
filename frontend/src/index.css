@@ -1,3 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nexo-bg: #060912;
+  --color-nexo-bg2: #0a0f1e;
+  --color-nexo-panel: #0e1426;
+  --color-nexo-border: #1c2740;
+  --color-nexo-blue: #3b82f6;
+  --color-nexo-cyan: #22d3ee;
+  --color-nexo-text: #e8eefc;
+  --color-nexo-muted: #94a3b8;
+}
+
+/* Texto con degradado azul -> cian */
+.text-gradient {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ===== Carrusel de logos (monocromo → blanco al hover) ===== */
+.tech-loop {
+  color: #7c899e;
+}
+.tech-loop .logoloop__node {
+  transition: color 0.3s ease;
+}
+.tech-loop .logoloop__item:hover .logoloop__node {
+  color: #ffffff;
+}
+
 :root {
   --color-bg: #020617;
   --color-surface: #0f172a;
