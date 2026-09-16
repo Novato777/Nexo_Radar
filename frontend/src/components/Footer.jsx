@@ -88,11 +88,13 @@ export default function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Marca */}
           <div className="lg:col-span-1">
-            <a href="#inicio" className="flex items-center gap-3">
-              <Logo size={80} />
-              <span className="text-4xl font-bold tracking-tight">
-                Ne<span className="text-gradient">X</span>o
-              </span>
+            <a href="#inicio" className="block mb-6">
+              <img 
+                src="/logo-nexo-radar-dark.png" 
+                alt="Logo NeXo Radar" 
+                className="h-16 w-auto object-contain" 
+                draggable={false} 
+              />
             </a>
             <p className="mt-5 max-w-xs text-base leading-relaxed text-nexo-muted">
               {site.slogan} Desarrollo de software y web para negocios que

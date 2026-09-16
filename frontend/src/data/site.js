@@ -3,7 +3,7 @@ export const site = {
   slogan: "Desarrollo de software de telemetría y web para negocios que requieren operaciones en tiempo real.",
   whatsappNumber: "573222067870",
   whatsappDisplay: "+57 322 206 7870",
-  email: "contacto@nexoradar.com",
+  email: "cardozobrayan334@gmail.com",
   location: "Colombia",
   developer: "Brayan Cardozo",
 }
