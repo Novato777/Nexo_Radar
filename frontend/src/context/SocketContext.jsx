@@ -63,14 +63,16 @@ export function SocketProvider({ children }) {
   };
 
   // Solicitar permiso para notificaciones y suscribir dispositivo a Web Push
-  const requestNotificationPermission = async () => {
+  const requestNotificationPermission = async (fromUserGesture = false) => {
     try {
       if ('Notification' in window) {
-        if (Notification.permission === 'default') {
-          await Notification.requestPermission();
-        }
         if (Notification.permission === 'granted') {
           await registerServiceWorkerAndSubscribePush();
+        } else if (Notification.permission === 'default' && fromUserGesture) {
+          const res = await Notification.requestPermission();
+          if (res === 'granted') {
+            await registerServiceWorkerAndSubscribePush();
+          }
         }
       }
     } catch (err) {
@@ -133,7 +135,17 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     checkInitialNewAlerts();
-    requestNotificationPermission();
+    // Si ya está concedido el permiso, registrar el Service Worker silenciosamente
+    requestNotificationPermission(false);
+
+    // Los navegadores modernos exigen que requestPermission provenga de un gesto del usuario
+    const handleFirstGesture = () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        requestNotificationPermission(true);
+      }
+    };
+    window.addEventListener('click', handleFirstGesture, { once: true });
+    window.addEventListener('keydown', handleFirstGesture, { once: true });
 
     // Polling de respaldo secundario (Socket.IO maneja el tiempo real principal)
     const pollInterval = setInterval(checkInitialNewAlerts, 25000);
@@ -188,6 +200,8 @@ export function SocketProvider({ children }) {
     setSocket(newSocket);
 
     return () => {
+      window.removeEventListener('click', handleFirstGesture);
+      window.removeEventListener('keydown', handleFirstGesture);
       clearInterval(pollInterval);
       document.removeEventListener('visibilitychange', handleAppWakeUp);
       window.removeEventListener('pageshow', handleAppWakeUp);
