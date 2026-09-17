@@ -461,6 +461,7 @@ export default function ClientPortal() {
                   src={getLogoUrl(business.logo_url)} 
                   alt={business.business_name} 
                   className="nexo-qr-avatar"
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
                 />
               ) : (
                 <div className="nexo-qr-avatar-fallback">

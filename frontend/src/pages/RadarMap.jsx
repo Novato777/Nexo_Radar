@@ -55,7 +55,7 @@ const createCustomIcon = (logoUrl, alertStatus, attendedBy) => {
   }
 
   const htmlContent = logoUrl 
-    ? `<img src="${getLogoUrl(logoUrl)}" style="width: 44px; height: 44px; border-radius: 50%; border: 3.5px solid ${borderColor}; object-fit: cover; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.6);" />` 
+    ? `<img src="${getLogoUrl(logoUrl)}" onerror="this.onerror=null; this.src='/logo-icon-radar.png';" style="width: 44px; height: 44px; border-radius: 50%; border: 3.5px solid ${borderColor}; object-fit: cover; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.6);" />` 
     : `<div style="background-color: var(--color-surface); width: 44px; height: 44px; border-radius: 50%; border: 3.5px solid ${borderColor}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.6);">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${borderColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>
        </div>`;
