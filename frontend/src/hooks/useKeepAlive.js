@@ -61,12 +61,7 @@ export default function useKeepAlive({
       if (!localStorage.getItem('nexo_auth')) return;
 
       try {
-        await axios.get(`${API_BASE}/api/health`, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          },
+        await axios.get(`${API_BASE}/api/health?_t=${Date.now()}`, {
           timeout: 8000
         });
       } catch (err) {

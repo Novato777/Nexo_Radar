@@ -39,12 +39,7 @@ export default function SuperAdmin() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/api/users?_t=${Date.now()}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
+      const res = await axios.get(`${API_BASE}/api/users?_t=${Date.now()}`);
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Error cargando colaboradores:', err);

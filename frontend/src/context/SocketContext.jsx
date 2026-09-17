@@ -115,9 +115,7 @@ export function SocketProvider({ children }) {
 
   // Consultar si existen alertas NUEVAS para el punto amarillo en el navbar
   const checkInitialNewAlerts = React.useCallback(() => {
-    axios.get(`${API_BASE}/api/requests?_t=${Date.now()}`, {
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
-    })
+    axios.get(`${API_BASE}/api/requests?_t=${Date.now()}`)
       .then(res => {
         const list = Array.isArray(res.data) ? res.data : [];
         const newOnes = list.filter(r => (r.status || '').toUpperCase() === 'NUEVA' || (r.status || '').toUpperCase() === 'PENDIENTE');

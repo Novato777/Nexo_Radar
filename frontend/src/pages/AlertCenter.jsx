@@ -62,12 +62,7 @@ export default function AlertCenter() {
 
   const fetchRequests = (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true);
-    axios.get(`${API_BASE}/api/requests?_t=${Date.now()}`, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
-    })
+    axios.get(`${API_BASE}/api/requests?_t=${Date.now()}`)
       .then(response => {
         const data = Array.isArray(response.data) ? response.data : [];
         setRequests(data);
