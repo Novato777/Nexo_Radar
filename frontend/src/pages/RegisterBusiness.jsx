@@ -187,7 +187,10 @@ export default function RegisterBusiness() {
     setLoading(true);
     
     const data = new FormData();
-    Object.keys(formData).forEach(key => data.append(key, formData[key]));
+    Object.keys(formData).forEach(key => {
+      const val = typeof formData[key] === 'string' ? formData[key].trim() : formData[key];
+      data.append(key, val);
+    });
     if (file) data.append('logo', file);
     if (!position) {
       setErrorMessage('Es obligatorio fijar la ubicación en el radar satelital. Por favor haz clic en el mapa sobre el punto donde opera el comercio para soltar el marcador GPS.');
@@ -200,9 +203,7 @@ export default function RegisterBusiness() {
     data.append('longitude', position.lng);
 
     try {
-      await axios.post(`${API_BASE}/api/businesses`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await axios.post(`${API_BASE}/api/businesses`, data);
       navigate('/terminales');
     } catch (error) {
       console.error('Error registrando negocio:', error);

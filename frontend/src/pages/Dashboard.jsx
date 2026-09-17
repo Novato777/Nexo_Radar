@@ -47,8 +47,13 @@ function EditMapController({ center }) {
       map.invalidateSize();
     }
   }, [center, map]);
-  return null;
-}
+// Función para normalizar nombres de ciudades (eliminar espacios extras, unificar mayúsculas y prevenir carpetas duplicadas)
+export const normalizeCityName = (str) => {
+  if (!str || typeof str !== 'string') return 'Desconocida';
+  const clean = str.trim().replace(/\s+/g, ' ');
+  if (!clean) return 'Desconocida';
+  return clean.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+};
 
 export default function Dashboard() {
   const [businesses, setBusinesses] = useState([]);
@@ -285,7 +290,7 @@ export default function Dashboard() {
       setDeleteModalOpen(false);
       setBusinessToDelete(null);
       // Si la ciudad seleccionada se quedó sin terminales, volver a vista de zonas
-      const remainingInCity = updated.filter(b => (b.city || 'Desconocida') === selectedCity);
+      const remainingInCity = updated.filter(b => normalizeCityName(b.city) === selectedCity);
       if (remainingInCity.length === 0) setSelectedCity(null);
     } catch (error) {
       console.error('Error eliminando negocio:', error);
@@ -313,9 +318,9 @@ export default function Dashboard() {
     );
   });
 
-  // Agrupación dinámica por ciudades para las carpetas
+  // Agrupación dinámica por ciudades para las carpetas (con normalización para evitar duplicados)
   const citiesData = businesses.reduce((acc, business) => {
-    const city = business.city || 'Desconocida';
+    const city = normalizeCityName(business.city);
     if (!acc[city]) {
       acc[city] = { count: 0, items: [] };
     }
@@ -623,13 +628,13 @@ export default function Dashboard() {
             </div>
 
             <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.25)', padding: '4px 14px', borderRadius: '20px', fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: '600' }}>
-              {businesses.filter(b => (b.city || 'Desconocida') === selectedCity).length} Terminales en esta zona
+              {businesses.filter(b => normalizeCityName(b.city) === selectedCity).length} Terminales en esta zona
             </div>
           </div>
 
           <div className="dashboard-grid">
             {businesses
-              .filter(b => (b.city || 'Desconocida') === selectedCity)
+              .filter(b => normalizeCityName(b.city) === selectedCity)
               .map(business => renderTerminalCard(business))}
           </div>
         </div>

@@ -40,8 +40,7 @@ app.use(helmet({
 
 app.use(cors({
   origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 
 // Límites de tamaño de payload para evitar saturación de memoria
@@ -90,6 +89,10 @@ const migrateUsers = require('./migrate-users');
 
 // Ejecutar migración de usuarios al iniciar el servidor
 migrateUsers().catch(e => console.warn('[Auto-Migrate users warning]:', e.message));
+
+// Limpiar y estandarizar nombres de ciudades en la base de datos (elimina espacios extras o dobles)
+db.query(`UPDATE businesses SET city = TRIM(REGEXP_REPLACE(city, '\\s+', ' ', 'g')) WHERE city IS NOT NULL;`)
+  .catch(e => console.warn('[City-Cleanup warning]:', e.message));
 
 // Use Routes
 app.use('/api/auth', authLimiter, authRoutes);
