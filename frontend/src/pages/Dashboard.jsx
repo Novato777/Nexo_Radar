@@ -740,93 +740,93 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Campos en dos columnas */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          {/* Campos en dos columnas responsivas */}
+          <div className="modal-form-grid">
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+              <label className="form-label">
                 Nombre del Comercio *
               </label>
               <input 
                 type="text" 
                 name="business_name" 
                 required 
-                className="input-styled" 
+                className="form-input" 
                 value={editFormData.business_name} 
                 onChange={handleEditChange} 
-                style={{ width: '100%', height: '40px' }}
+                style={{ width: '100%', height: '42px' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+              <label className="form-label">
                 Propietario / Contacto
               </label>
               <input 
                 type="text" 
                 name="owner_name" 
-                className="input-styled" 
+                className="form-input" 
                 value={editFormData.owner_name} 
                 onChange={handleEditChange} 
-                style={{ width: '100%', height: '40px' }}
+                style={{ width: '100%', height: '42px' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+              <label className="form-label">
                 Teléfono WhatsApp *
               </label>
               <input 
                 type="text" 
                 name="phone" 
                 required 
-                className="input-styled" 
+                className="form-input" 
                 value={editFormData.phone} 
                 onChange={handleEditChange} 
-                style={{ width: '100%', height: '40px' }}
+                style={{ width: '100%', height: '42px' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+              <label className="form-label">
                 Código Token QR *
               </label>
               <input 
                 type="text" 
                 name="qr_token" 
                 required 
-                className="input-styled" 
+                className="form-input" 
                 value={editFormData.qr_token} 
                 onChange={handleEditChange} 
-                style={{ width: '100%', height: '40px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-accent)' }}
+                style={{ width: '100%', height: '42px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-accent)' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+              <label className="form-label">
                 Ciudad / Municipio *
               </label>
               <input 
                 type="text" 
                 name="city" 
                 required 
-                className="input-styled" 
+                className="form-input" 
                 value={editFormData.city} 
                 onChange={handleEditChange} 
-                style={{ width: '100%', height: '40px' }}
+                style={{ width: '100%', height: '42px' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+              <label className="form-label">
                 Dirección Física
               </label>
               <input 
                 type="text" 
                 name="address" 
-                className="input-styled" 
+                className="form-input" 
                 value={editFormData.address} 
                 onChange={handleEditChange} 
-                style={{ width: '100%', height: '40px' }}
+                style={{ width: '100%', height: '42px' }}
               />
             </div>
           </div>
@@ -835,10 +835,10 @@ export default function Dashboard() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
               <div>
-                <label style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
+                <label className="form-label" style={{ textTransform: 'uppercase', marginBottom: '2px' }}>
                   Ubicación Satelital (Radar GPS)
                 </label>
-                <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: 'var(--color-text-secondary)' }}>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   Haz clic sobre el mapa en la nueva dirección para mover el pin GPS.
                 </p>
               </div>
@@ -846,7 +846,7 @@ export default function Dashboard() {
                 type="button" 
                 className="btn-secondary" 
                 onClick={handleUseCurrentLocationForEdit}
-                style={{ padding: '5px 12px', fontSize: '0.78rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(6, 182, 212, 0.1)', color: 'var(--color-accent)', border: '1px solid rgba(6, 182, 212, 0.3)' }}
+                style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}
               >
                 <Navigation size={13} />
                 <span>Usar Mi GPS Actual</span>
@@ -855,31 +855,24 @@ export default function Dashboard() {
 
             {/* Buscador de dirección rápida para centrar el mapa */}
             <div style={{ position: 'relative', marginBottom: '8px' }}>
-              <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
               <input 
                 type="text"
                 placeholder="Buscar nueva dirección o ciudad para mover el mapa..."
                 value={editSearchQuery}
                 onChange={(e) => setEditSearchQuery(e.target.value)}
-                className="input-styled"
-                style={{ width: '100%', height: '36px', paddingLeft: '34px', fontSize: '0.82rem' }}
+                className="form-input"
+                style={{ width: '100%', height: '40px', paddingLeft: '38px', fontSize: '0.84rem' }}
               />
-              {editSearching && <Loader2 size={15} className="animate-spin" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)' }} />}
+              {editSearching && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)' }} />}
 
               {editSuggestions.length > 0 && (
-                <ul style={{
-                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000,
-                  background: '#0f172a', border: '1px solid rgba(6, 182, 212, 0.3)',
-                  borderRadius: '8px', listStyle: 'none', margin: '4px 0 0', padding: '6px 0',
-                  maxHeight: '160px', overflowY: 'auto', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
-                }}>
+                <ul className="modal-search-dropdown">
                   {editSuggestions.map((sug, idx) => (
                     <li 
                       key={idx}
                       onClick={() => handleSelectEditLocation(sug)}
-                      style={{ padding: '8px 12px', fontSize: '0.8rem', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--color-text-primary)' }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(6,182,212,0.15)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                      className="modal-search-item"
                     >
                       📍 {sug.display_name}
                     </li>
@@ -903,12 +896,12 @@ export default function Dashboard() {
               </MapContainer>
             </div>
 
-            <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(2, 6, 23, 0.5)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', flexWrap: 'wrap', gap: '6px' }}>
+            <div className="modal-coords-box">
               <span style={{ color: editPosition ? '#10b981' : '#f87171', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <MapPin size={13} />
+                <MapPin size={14} />
                 {editPosition 
-                  ? `Coordenadas fijadas: ${editPosition.lat.toFixed(6)}, ${editPosition.lng.toFixed(6)}`
-                  : '⚠️ Sin coordenadas. Haz clic en el mapa para marcar la nueva ubicación.'}
+                  ? `Coordenadas: ${editPosition.lat.toFixed(6)}, ${editPosition.lng.toFixed(6)}`
+                  : '⚠️ Sin coordenadas. Haz clic en el mapa para marcar la ubicación.'}
               </span>
               <span style={{ color: 'var(--color-accent)', fontWeight: '700' }}>
                 📌 Haz clic en el mapa para mover el pin
@@ -917,13 +910,13 @@ export default function Dashboard() {
           </div>
 
           {/* Botones de acción del Modal */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="modal-actions-footer">
             <button 
               type="button" 
               className="btn-secondary" 
               onClick={() => setEditModalOpen(false)}
               disabled={editSaving}
-              style={{ padding: '10px 18px', borderRadius: '10px' }}
+              style={{ padding: '10px 20px', borderRadius: '10px' }}
             >
               Cancelar
             </button>
@@ -931,7 +924,7 @@ export default function Dashboard() {
               type="submit" 
               className="btn-primary" 
               disabled={editSaving}
-              style={{ padding: '10px 22px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '8px', fontWeight: '700' }}
+              style={{ padding: '10px 24px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '8px', fontWeight: '700' }}
             >
               {editSaving && <Loader2 size={16} className="animate-spin" />}
               <span>{editSaving ? 'Guardando...' : 'Guardar Cambios'}</span>
@@ -954,35 +947,28 @@ export default function Dashboard() {
   );
 
   // FUNCIÓN PARA RENDERIZAR LA TARJETA DE CADA TERMINAL
+  // FUNCIÓN PARA RENDERIZAR LA TARJETA DE CADA TERMINAL
   function renderTerminalCard(business) {
     const isCopied = copiedId === business.id;
     return (
       <div 
         key={business.id} 
-        className="bento-card terminal-node-card" 
-        style={{ 
-          padding: 0, 
-          display: 'flex', 
-          flexDirection: 'column',
-          background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.95) 100%)',
-          overflow: 'hidden',
-          height: '100%'
-        }}
+        className="bento-card terminal-node-card"
       >
         <div className="glow-accent" style={{ top: '-30px', left: '-30px', width: '120px', height: '120px', opacity: 0.12 }}></div>
         
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%', flex: 1 }}>
           
           {/* Barra Superior del Nodo (Telemetría / ID) */}
-          <div className="terminal-topbar" style={{ padding: '12px 18px', background: 'rgba(0,0,0,0.25)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="terminal-topbar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700' }}>NODO</span>
-              <span style={{ fontFamily: 'monospace', background: 'rgba(6, 182, 212, 0.15)', color: 'var(--color-accent)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '700', border: '1px solid rgba(6,182,212,0.3)' }}>
+              <span className="terminal-topbar-label">NODO</span>
+              <span className="terminal-node-badge">
                 #{business.qr_token || '---'}
               </span>
             </div>
 
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+            <div className="terminal-status-badge">
               <span className="radar-dot-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
               <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {business.status || 'ONLINE'}
@@ -991,10 +977,9 @@ export default function Dashboard() {
           </div>
 
           {/* Encabezado con Logo Ampliado y Título Legible */}
-          <div className="terminal-header" style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="terminal-header">
             <div 
               className="terminal-logo-container" 
-              style={{ position: 'relative', width: '62px', height: '62px', flexShrink: 0, cursor: 'pointer' }}
               onClick={(e) => handleOpenLogoPicker(business, e)}
               title="Haz clic para cambiar o subir foto a Cloudinary"
             >
@@ -1003,32 +988,16 @@ export default function Dashboard() {
                   src={getLogoUrl(business.logo_url)} 
                   alt={business.business_name} 
                   onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
-                  style={{ width: '62px', height: '62px', borderRadius: '16px', objectFit: 'cover', border: '2.5px solid rgba(6,182,212,0.4)', boxShadow: '0 6px 18px rgba(0,0,0,0.35)', display: 'block' }} 
+                  className="terminal-logo-img"
                 />
               ) : (
-                <div style={{ width: '62px', height: '62px', borderRadius: '16px', background: 'rgba(6,182,212,0.12)', border: '1.5px solid rgba(6,182,212,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Building2 size={30} color="var(--color-accent)" />
+                <div className="terminal-logo-fallback">
+                  <Building2 size={28} color="var(--color-accent)" />
                 </div>
               )}
 
               {/* Botón flotante para cambiar foto */}
-              <div 
-                style={{
-                  position: 'absolute',
-                  bottom: '-4px',
-                  right: '-4px',
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  background: 'var(--color-accent, #06b6d4)',
-                  color: '#020617',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
-                  border: '2px solid #0f172a'
-                }}
-              >
+              <div className="terminal-logo-edit-badge">
                 {uploadingLogoId === business.id ? (
                   <Loader2 size={13} className="animate-spin" />
                 ) : (
@@ -1037,57 +1006,48 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h3 style={{ margin: '0 0 5px 0', fontSize: '1.15rem', color: 'var(--color-text-primary)', fontWeight: '700', lineHeight: '1.35', wordBreak: 'break-word' }}>
+            <div className="terminal-header-info">
+              <h3 className="terminal-title">
                 {business.business_name}
               </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-secondary)', fontSize: '0.84rem' }}>
+              <div className="terminal-location">
                 <MapPin size={14} color="var(--color-accent)" style={{ flexShrink: 0 }} />
-                <span style={{ wordBreak: 'break-word' }}>{business.city || 'Ubicación no asignada'}</span>
+                <span>{business.city || 'Ubicación no asignada'}</span>
               </div>
             </div>
           </div>
           
           {/* Cuerpo: Datos del Nodo Responsivos */}
-          <div className="terminal-body" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div className="terminal-data-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(2, 6, 23, 0.45)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap', gap: '8px' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <div className="terminal-body">
+            <div className="terminal-data-row">
+              <span className="terminal-data-label">
                 <Phone size={14} color="var(--color-accent)" />
                 Contacto
               </span>
-              <span style={{ fontSize: '0.88rem', color: 'var(--color-text-primary)', fontWeight: '600', wordBreak: 'break-all' }}>
+              <span className="terminal-data-value">
                 {business.phone || 'Sin número'}
               </span>
             </div>
 
-            <div className="terminal-data-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(2, 6, 23, 0.45)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap', gap: '8px' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '7px' }}>
+            <div className="terminal-data-row">
+              <span className="terminal-data-label">
                 <QrCode size={14} color="var(--color-accent)" />
                 Token QR
               </span>
-              <span style={{ fontFamily: 'monospace', fontSize: '0.92rem', color: 'var(--color-accent)', fontWeight: '700', letterSpacing: '1px', background: 'rgba(6,182,212,0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(6,182,212,0.25)' }}>
-                {business.qr_token}
+              <span className="terminal-qr-token-pill">
+                #{business.qr_token}
               </span>
             </div>
           </div>
 
           {/* Acciones Rápidas con Botones Anclados y Mejor Estilo */}
-          <div className="terminal-actions-footer" style={{ marginTop: 'auto', padding: '14px 18px', background: 'rgba(0,0,0,0.25)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="terminal-actions-footer">
             
             {/* Fila 1: Botones de Gestión (Editar y Ver en Radar) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="terminal-btn-row">
               <button
                 onClick={(e) => openEditModal(business, e)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-                  height: '38px', padding: '0 10px',
-                  background: 'rgba(6, 182, 212, 0.12)', color: 'var(--color-accent)',
-                  border: '1px solid rgba(6, 182, 212, 0.35)', borderRadius: '10px',
-                  cursor: 'pointer', fontSize: '0.84rem', fontWeight: '700',
-                  transition: 'all 0.2s ease', whiteSpace: 'nowrap'
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.25)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.12)'; e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.35)'; }}
+                className="terminal-btn-edit"
                 title="Editar información, foto y ubicación GPS"
               >
                 <Edit3 size={15} />
@@ -1096,16 +1056,7 @@ export default function Dashboard() {
 
               <button
                 onClick={() => navigate(`/mapa?focus=${business.id}`)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-                  height: '38px', padding: '0 10px',
-                  background: 'rgba(255, 255, 255, 0.05)', color: 'var(--color-text-primary)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px',
-                  cursor: 'pointer', fontSize: '0.84rem', fontWeight: '600',
-                  transition: 'all 0.2s ease', whiteSpace: 'nowrap'
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                className="terminal-btn-radar"
                 title="Localizar en el radar satelital en vivo"
               >
                 <Navigation size={14} color="var(--color-accent)" />
@@ -1114,42 +1065,20 @@ export default function Dashboard() {
             </div>
 
             {/* Fila 2: Portal QR y Copiar URL */}
-            <div className="terminal-btn-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              {/* Abrir Portal QR */}
+            <div className="terminal-btn-row">
               <a
                 href={`/qr/${business.qr_token}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="terminal-btn-portal"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-                  height: '42px', padding: '0 12px', background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(6, 182, 212, 0.08) 100%)',
-                  color: 'var(--color-accent)', border: '1px solid rgba(6, 182, 212, 0.35)', borderRadius: '10px',
-                  textDecoration: 'none', fontSize: '0.85rem', fontWeight: '700', transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 10px rgba(6,182,212,0.1)', whiteSpace: 'nowrap'
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.28)'; e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(6, 182, 212, 0.08) 100%)'; e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.35)'; e.currentTarget.style.transform = 'none'; }}
               >
                 <ExternalLink size={15} />
                 <span>Portal QR</span>
               </a>
 
-              {/* Copiar Link */}
               <button
                 onClick={(e) => copyQrLink(business, e)}
                 className="terminal-btn-copy"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
-                  height: '42px', padding: '0 12px',
-                  background: isCopied ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.04)',
-                  color: isCopied ? '#10b981' : 'var(--color-text-secondary)',
-                  border: isCopied ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600',
-                  transition: 'all 0.2s ease', whiteSpace: 'nowrap'
-                }}
-                onMouseOver={(e) => { if (!isCopied) { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'var(--color-text-primary)'; } }}
-                onMouseOut={(e) => { if (!isCopied) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; } }}
                 title="Copiar URL del portal QR"
               >
                 {isCopied ? <Check size={15} /> : <Copy size={15} />}
@@ -1157,18 +1086,10 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Desvincular Nodo */}
+            {/* Fila 3: Desvincular Nodo */}
             <button 
               onClick={() => confirmDelete(business)} 
               className="terminal-btn-delete"
-              style={{ 
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', 
-                height: '36px', padding: '0 12px', background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', 
-                border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', cursor: 'pointer', 
-                transition: 'all 0.2s ease', fontWeight: '600', fontSize: '0.8rem'
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.45)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)'; }}
             >
               <Trash2 size={14} />
               <span>Desvincular Nodo</span>
