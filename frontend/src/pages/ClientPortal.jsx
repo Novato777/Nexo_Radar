@@ -21,6 +21,7 @@ export default function ClientPortal() {
   const [serviceType, setServiceType] = useState('Asistencia General');
   const [message, setMessage] = useState('');
   const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const checkToken = () => {
     setLoading(true);
@@ -451,106 +452,175 @@ export default function ClientPortal() {
           </div>
         </header>
 
-        {/* 1. TARJETA DEL ESTABLECIMIENTO (PERFIL DE COMERCIO) */}
-        <section className="nexo-qr-card-profile" style={{ padding: '22px', marginBottom: '16px' }}>
-          <div className="nexo-qr-profile-header">
-            {/* Avatar / Logotipo */}
-            <div style={{ flexShrink: 0 }}>
-              {business.logo_url ? (
-                <img 
-                  src={getLogoUrl(business.logo_url)} 
-                  alt={business.business_name} 
-                  className="nexo-qr-avatar"
-                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
-                />
-              ) : (
-                <div className="nexo-qr-avatar-fallback">
-                  <Building2 size={32} color="#06b6d4" />
+        {/* 1. TARJETA DEL ESTABLECIMIENTO (PERFIL DE COMERCIO CON FOTO DESTACADA) */}
+        <section className="nexo-qr-card-profile" style={{ padding: '0', marginBottom: '16px', overflow: 'hidden' }}>
+          
+          {/* FOTO PRINCIPAL DEL LUGAR / COMERCIO EN GRANDE */}
+          <div style={{ position: 'relative', width: '100%', height: '220px', background: '#090d16', overflow: 'hidden' }}>
+            {business.logo_url ? (
+              <img 
+                src={getLogoUrl(business.logo_url)} 
+                alt={business.business_name} 
+                className="nexo-qr-hero-photo"
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/logo-icon-radar.png'; }}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover', 
+                  display: 'block',
+                  cursor: 'pointer',
+                  transition: 'transform 0.4s ease'
+                }}
+                onClick={() => setShowPhotoModal(true)}
+              />
+            ) : (
+              <div style={{ 
+                width: '100%', 
+                height: '100%', 
+                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                <Building2 size={52} color="#06b6d4" />
+                <span style={{ fontSize: '0.84rem', color: '#94a3b8', fontWeight: '600' }}>Establecimiento Verificado</span>
+              </div>
+            )}
+
+            {/* Sombra / Gradiente para contraste visual */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(180deg, rgba(2, 6, 23, 0.45) 0%, rgba(2, 6, 23, 0.05) 50%, rgba(15, 23, 42, 0.95) 100%)',
+              pointerEvents: 'none'
+            }}></div>
+
+            {/* Badges Flotantes sobre la Foto */}
+            <div style={{
+              position: 'absolute',
+              top: '12px',
+              left: '12px',
+              right: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              zIndex: 2
+            }}>
+              {/* Status Badge Elegante */}
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '5px', 
+                background: 'rgba(2, 6, 23, 0.8)', 
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                padding: '4px 11px', 
+                borderRadius: '16px', 
+                fontSize: '0.72rem',
+                fontWeight: '700',
+                color: '#34d399',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+              }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10b981' }}></span>
+                <span>Terminal Verificada</span>
+              </div>
+
+              {/* Identificador de Nodo */}
+              <span style={{ 
+                fontSize: '0.74rem', 
+                color: '#e2e8f0', 
+                background: 'rgba(2, 6, 23, 0.8)', 
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                padding: '4px 10px', 
+                borderRadius: '8px', 
+                fontFamily: 'monospace', 
+                fontWeight: '700',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+              }}>
+                Nodo #{business.qr_token}
+              </span>
+            </div>
+
+            {/* Botón flotante para ver foto completa */}
+            {business.logo_url && (
+              <button 
+                type="button"
+                onClick={() => setShowPhotoModal(true)}
+                style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  right: '12px',
+                  background: 'rgba(2, 6, 23, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '5px 12px',
+                  borderRadius: '8px',
+                  fontSize: '0.74rem',
+                  fontWeight: '600',
+                  color: '#38bdf8',
+                  border: '1px solid rgba(6, 182, 212, 0.35)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  zIndex: 2,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+                }}
+              >
+                <span>🔍 Ver en grande</span>
+              </button>
+            )}
+          </div>
+
+          {/* Información Principal del Negocio debajo de la foto */}
+          <div style={{ padding: '18px 22px 22px' }}>
+            <h1 style={{ 
+              margin: '0 0 8px 0', 
+              fontSize: '1.65rem', 
+              fontWeight: '800', 
+              color: '#f8fafc', 
+              letterSpacing: '-0.02em', 
+              lineHeight: '1.25' 
+            }}>
+              {business.business_name}
+            </h1>
+
+            {/* Ubicación y Titular */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', color: '#94a3b8', fontSize: '0.86rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <MapPin size={15} color="#06b6d4" />
+                <span style={{ fontWeight: '500' }}>{business.city || 'Ubicación no especificada'}</span>
+              </div>
+              {business.owner_name && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <User size={15} color="#94a3b8" />
+                  <span>{business.owner_name}</span>
                 </div>
               )}
             </div>
 
-            {/* Información Principal del Negocio */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
-                {/* Status Badge Elegante */}
-                <div style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '5px', 
-                  background: 'rgba(16, 185, 129, 0.15)', 
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  padding: '3px 10px', 
-                  borderRadius: '16px', 
-                  fontSize: '0.72rem',
-                  fontWeight: '700',
-                  color: '#34d399'
-                }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10b981' }}></span>
-                  <span>Terminal Verificada</span>
-                </div>
-
-                {/* Identificador de Nodo */}
-                <span style={{ 
-                  fontSize: '0.74rem', 
-                  color: '#94a3b8', 
-                  background: 'rgba(255, 255, 255, 0.06)', 
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  padding: '3px 9px', 
-                  borderRadius: '6px', 
-                  fontFamily: 'monospace', 
-                  fontWeight: '700' 
-                }}>
-                  Nodo #{business.qr_token}
-                </span>
-              </div>
-
-              {/* Nombre del Establecimiento */}
-              <h1 style={{ 
-                margin: '0 0 6px 0', 
-                fontSize: '1.5rem', 
-                fontWeight: '800', 
-                color: '#f8fafc', 
-                letterSpacing: '-0.02em', 
-                lineHeight: '1.25' 
+            {/* Ficha de Dirección Física (Contextual) */}
+            {business.address && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                padding: '10px 14px', 
+                borderRadius: '10px', 
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                fontSize: '0.84rem',
+                color: '#cbd5e1',
+                marginTop: '14px'
               }}>
-                {business.business_name}
-              </h1>
-
-              {/* Ubicación y Titular */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', color: '#94a3b8', fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <MapPin size={14} color="#06b6d4" />
-                  <span>{business.city || 'Ubicación no especificada'}</span>
-                </div>
-                {business.owner_name && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <User size={14} color="#94a3b8" />
-                    <span>{business.owner_name}</span>
-                  </div>
-                )}
+                <MapPin size={14} color="#06b6d4" style={{ flexShrink: 0 }} />
+                <span style={{ wordBreak: 'break-word' }}>{business.address}</span>
               </div>
-            </div>
+            )}
           </div>
-
-          {/* Ficha de Dirección Física (Contextual) */}
-          {business.address && (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              padding: '10px 14px', 
-              borderRadius: '10px', 
-              background: 'rgba(15, 23, 42, 0.65)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              fontSize: '0.84rem',
-              color: '#cbd5e1',
-              marginTop: '16px'
-            }}>
-              <MapPin size={14} color="#06b6d4" style={{ flexShrink: 0 }} />
-              <span style={{ wordBreak: 'break-word' }}>{business.address}</span>
-            </div>
-          )}
         </section>
 
         {/* 2. CENTRO DE ASISTENCIA (PRIORIDAD PRINCIPAL DE LA PÁGINA) */}
@@ -891,6 +961,19 @@ export default function ClientPortal() {
           </button>
         </div>
       </Modal>
+
+      {/* Modal / Lightbox para ver la foto del lugar en grande */}
+      {showPhotoModal && business?.logo_url && (
+        <Modal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} title={`Foto: ${business.business_name}`} maxWidth="680px">
+          <div style={{ textAlign: 'center', padding: '10px 0' }}>
+            <img 
+              src={getLogoUrl(business.logo_url)} 
+              alt={business.business_name} 
+              style={{ width: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.6)' }} 
+            />
+          </div>
+        </Modal>
+      )}
 
     </div>
   );

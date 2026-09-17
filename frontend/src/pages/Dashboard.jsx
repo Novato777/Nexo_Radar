@@ -47,6 +47,9 @@ function EditMapController({ center }) {
       map.invalidateSize();
     }
   }, [center, map]);
+  return null;
+}
+
 // Función para normalizar nombres de ciudades (eliminar espacios extras, unificar mayúsculas y prevenir carpetas duplicadas)
 export const normalizeCityName = (str) => {
   if (!str || typeof str !== 'string') return 'Desconocida';
