@@ -24,7 +24,42 @@ async function migrateUsers() {
       );
     `);
 
-    // 3. Asegurar que la columna role existe
+    // 2.1 Crear tabla businesses si no existe
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS businesses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_name VARCHAR(150) NOT NULL,
+        owner_name VARCHAR(100),
+        phone VARCHAR(50),
+        city VARCHAR(100),
+        address TEXT,
+        latitude DECIMAL(10, 8),
+        longitude DECIMAL(11, 8),
+        qr_token VARCHAR(50) UNIQUE,
+        status VARCHAR(50) DEFAULT 'ACTIVO',
+        logo_url TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // 2.2 Crear tabla service_requests si no existe
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS service_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+        type VARCHAR(100),
+        message TEXT,
+        status VARCHAR(50) DEFAULT 'NUEVA',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        viewed_at TIMESTAMP WITH TIME ZONE,
+        resolved_at TIMESTAMP WITH TIME ZONE,
+        attended_by VARCHAR(150),
+        resolved_by VARCHAR(150)
+      );
+    `);
+
+    // 3. Asegurar que columnas necesarias existan
     await db.query(`
       DO $$
       BEGIN
@@ -33,6 +68,13 @@ async function migrateUsers() {
           WHERE table_name='users' AND column_name='role'
         ) THEN
           ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'colaborador';
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='businesses' AND column_name='logo_url'
+        ) THEN
+          ALTER TABLE businesses ADD COLUMN logo_url TEXT;
         END IF;
 
         -- Columnas para trazabilidad de colaboradores en solicitudes

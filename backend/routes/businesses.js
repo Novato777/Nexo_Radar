@@ -21,9 +21,11 @@ router.post('/', upload.single('logo'), async (req, res) => {
       try {
         logo_url = await uploadImage(req.file.buffer, req.file.originalname, 'nexo_radar/logos');
       } catch (uploadErr) {
-        console.error('[Error subiendo logo a Cloudinary]:', uploadErr);
+        console.error('[Error procesando logo]:', uploadErr);
         // Continuar el registro aunque la imagen falle para no bloquear la operación
       }
+    } else if (req.body.logo_url && typeof req.body.logo_url === 'string') {
+      logo_url = req.body.logo_url.trim();
     }
     
     const result = await db.query(

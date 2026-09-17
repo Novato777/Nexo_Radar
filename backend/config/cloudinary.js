@@ -12,10 +12,13 @@ function initCloudinary() {
       const cleanUrl = envUrl.replace(/^["']|["']$/g, '').trim();
       const parsed = new URL(cleanUrl);
       if (parsed.protocol === 'cloudinary:') {
+        const apiKey = decodeURIComponent(parsed.username || '').replace(/[<>]/g, '').trim();
+        const apiSecret = decodeURIComponent(parsed.password || '').replace(/[<>]/g, '').trim();
+        const cloudName = (parsed.hostname || '').replace(/[<>]/g, '').trim();
         cloudinary.config({
-          cloud_name: parsed.hostname,
-          api_key: decodeURIComponent(parsed.username || ''),
-          api_secret: decodeURIComponent(parsed.password || ''),
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
           secure: true
         });
       } else {
@@ -26,9 +29,9 @@ function initCloudinary() {
     }
   } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME.trim(),
-      api_key: process.env.CLOUDINARY_API_KEY.trim(),
-      api_secret: process.env.CLOUDINARY_API_SECRET.trim(),
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME.replace(/[<>]/g, '').trim(),
+      api_key: process.env.CLOUDINARY_API_KEY.replace(/[<>]/g, '').trim(),
+      api_secret: process.env.CLOUDINARY_API_SECRET.replace(/[<>]/g, '').trim(),
       secure: true
     });
   }
@@ -59,12 +62,42 @@ function getCloudinaryStatus() {
 }
 
 /**
+ * Determina el tipo MIME del archivo a partir de su extensión o magic numbers del buffer
+ */
+function getMimeType(originalname, buffer) {
+  const ext = (path.extname(originalname || '') || '').toLowerCase();
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  if (ext === '.svg') return 'image/svg+xml';
+
+  if (buffer && buffer.length >= 12) {
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return 'image/jpeg';
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return 'image/png';
+    if (buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP') return 'image/webp';
+  }
+  return 'image/jpeg';
+}
+
+/**
+ * Convierte un buffer de imagen en Data URI persistente para guardar directamente en PostgreSQL
+ */
+function bufferToDataUri(buffer, originalname) {
+  const mime = getMimeType(originalname, buffer);
+  const base64 = buffer.toString('base64');
+  return `data:${mime};base64,${base64}`;
+}
+
+/**
  * Sube un buffer de imagen a Cloudinary de forma confiable mediante stream nativo.
- * Si Cloudinary no está configurado o falla, hace un fallback seguro guardando en disco local uploads/
+ * Si Cloudinary no está configurado o falla la conexión, genera un Data URI persistente
+ * que se almacena directamente en la base de datos (PostgreSQL), garantizando que NUNCA
+ * se pierda en reinicios o suspensiones de contenedores efímeros (Render/Vercel).
  * @param {Buffer} buffer - Buffer del archivo en memoria (Multer memoryStorage)
  * @param {string} originalname - Nombre original del archivo para extensión
  * @param {string} folder - Carpeta de destino en Cloudinary
- * @returns {Promise<string>} - URL segura HTTPS resultante o ruta local
+ * @returns {Promise<string>} - URL HTTPS de Cloudinary o Data URI persistente
  */
 function uploadImage(buffer, originalname = 'logo.png', folder = 'nexo_radar/logos') {
   return new Promise((resolve, reject) => {
@@ -84,11 +117,13 @@ function uploadImage(buffer, originalname = 'logo.png', folder = 'nexo_radar/log
         },
         (error, result) => {
           if (error) {
-            console.error('[Cloudinary Upload Error]:', error);
-            // Intentar fallback a guardado local en caso de fallo temporal del CDN
+            console.error('[Cloudinary Upload Error]:', error.message || error);
+            // Fallback indestructible a Data URI persistente en PostgreSQL
             try {
-              const localUrl = saveToLocalFallback(buffer, originalname);
-              return resolve(localUrl);
+              saveToLocalFallback(buffer, originalname);
+              const persistentUri = bufferToDataUri(buffer, originalname);
+              console.log('[Cloudinary Fallback] Imagen guardada en Data URI persistente para PostgreSQL');
+              return resolve(persistentUri);
             } catch (localErr) {
               return reject(error);
             }
@@ -99,10 +134,11 @@ function uploadImage(buffer, originalname = 'logo.png', folder = 'nexo_radar/log
       );
 
       uploadStream.on('error', (streamErr) => {
-        console.error('[Cloudinary Stream Error]:', streamErr);
+        console.error('[Cloudinary Stream Error]:', streamErr.message || streamErr);
         try {
-          const localUrl = saveToLocalFallback(buffer, originalname);
-          resolve(localUrl);
+          saveToLocalFallback(buffer, originalname);
+          const persistentUri = bufferToDataUri(buffer, originalname);
+          resolve(persistentUri);
         } catch (localErr) {
           reject(streamErr);
         }
@@ -111,27 +147,37 @@ function uploadImage(buffer, originalname = 'logo.png', folder = 'nexo_radar/log
       // Stream nativo de Node.js, seguro y eficiente
       Readable.from(buffer).pipe(uploadStream);
     } else {
-      console.warn('[Cloudinary Warning] Credenciales no detectadas. Guardando en almacenamiento local.');
-      const localUrl = saveToLocalFallback(buffer, originalname);
-      resolve(localUrl);
+      console.warn('[Cloudinary Warning] Credenciales no detectadas. Guardando en base de datos como Data URI permanente.');
+      try {
+        saveToLocalFallback(buffer, originalname);
+      } catch (e) {
+        console.warn('[Local fallback disk warning]:', e.message);
+      }
+      const persistentUri = bufferToDataUri(buffer, originalname);
+      resolve(persistentUri);
     }
   });
 }
 
 /**
- * Fallback seguro local en caso de que no haya variables de entorno de Cloudinary
+ * Guardado local secundario para depuración / desarrollo en disco
  */
 function saveToLocalFallback(buffer, originalname) {
-  const uploadsDir = path.join(__dirname, '..', 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+  try {
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(originalname) || '.png';
+    const filename = `${uniqueSuffix}${ext}`;
+    const filepath = path.join(uploadsDir, filename);
+    fs.writeFileSync(filepath, buffer);
+    return `/uploads/${filename}`;
+  } catch (err) {
+    console.debug('[saveToLocalFallback debug]:', err.message);
+    return null;
   }
-  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-  const ext = path.extname(originalname) || '.png';
-  const filename = `${uniqueSuffix}${ext}`;
-  const filepath = path.join(uploadsDir, filename);
-  fs.writeFileSync(filepath, buffer);
-  return `/uploads/${filename}`;
 }
 
 module.exports = {
@@ -139,5 +185,8 @@ module.exports = {
   initCloudinary,
   isCloudinaryConfigured,
   getCloudinaryStatus,
-  uploadImage
+  uploadImage,
+  bufferToDataUri,
+  getMimeType
 };
+

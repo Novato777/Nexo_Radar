@@ -5,12 +5,19 @@ export const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
  * Devuelve la URL correcta para un logo, ya sea ruta relativa local o URL externa (Cloudinary)
  */
 export const getLogoUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  if (
+    trimmed.startsWith('http://') || 
+    trimmed.startsWith('https://') || 
+    trimmed.startsWith('data:') || 
+    trimmed.startsWith('blob:')
+  ) {
+    return trimmed;
   }
   const cleanBase = (API_BASE || '').replace(/\/+$/, '');
-  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${cleanBase}${cleanPath}`;
 };
 

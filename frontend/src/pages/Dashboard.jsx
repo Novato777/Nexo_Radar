@@ -12,6 +12,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import L from 'leaflet';
 import Modal from '../components/Modal';
 import { API_BASE, getLogoUrl } from '../config';
+import { compressImage } from '../utils/imageCompressor';
 
 // Icono personalizado para el picker en el modal de edición
 const editPickerIcon = new L.Icon({
@@ -159,11 +160,17 @@ export default function Dashboard() {
     setEditFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleEditFileChange = (e) => {
+  const handleEditFileChange = async (e) => {
     const selected = e.target.files?.[0];
     if (selected) {
-      setEditFile(selected);
       setEditPreviewUrl(URL.createObjectURL(selected));
+      try {
+        const compressed = await compressImage(selected, { maxWidth: 800, maxHeight: 800, quality: 0.78 });
+        setEditFile(compressed);
+      } catch (err) {
+        console.warn('Error comprimiendo logo en edición, usando original:', err);
+        setEditFile(selected);
+      }
     }
   };
 
@@ -247,8 +254,15 @@ export default function Dashboard() {
     if (!file || !selectedBusinessForLogo) return;
 
     setUploadingLogoId(selectedBusinessForLogo.id);
+    let finalFile = file;
+    try {
+      finalFile = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.78 });
+    } catch (compressErr) {
+      console.warn('Error comprimiendo archivo directo:', compressErr);
+    }
+
     const formData = new FormData();
-    formData.append('logo', file);
+    formData.append('logo', finalFile);
 
     try {
       const res = await axios.patch(`${API_BASE}/api/businesses/${selectedBusinessForLogo.id}/logo`, formData);

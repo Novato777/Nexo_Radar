@@ -9,6 +9,7 @@ import Modal from '../components/Modal';
 import axios from 'axios';
 import L from 'leaflet';
 import { API_BASE } from '../config';
+import { compressImage } from '../utils/imageCompressor';
 
 // Icono personalizado para el picker
 const pickerIcon = new L.Icon({
@@ -141,11 +142,17 @@ export default function RegisterBusiness() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
+      try {
+        const compressed = await compressImage(selectedFile, { maxWidth: 800, maxHeight: 800, quality: 0.78 });
+        setFile(compressed);
+      } catch (err) {
+        console.warn('Error comprimiendo foto, usando original:', err);
+        setFile(selectedFile);
+      }
     }
   };
 
