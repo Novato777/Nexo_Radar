@@ -120,7 +120,6 @@ function uploadImage(buffer, originalname = 'logo.png', folder = 'nexo_radar/log
             console.error('[Cloudinary Upload Error]:', error.message || error);
             // Fallback indestructible a Data URI persistente en PostgreSQL
             try {
-              saveToLocalFallback(buffer, originalname);
               const persistentUri = bufferToDataUri(buffer, originalname);
               console.log('[Cloudinary Fallback] Imagen guardada en Data URI persistente para PostgreSQL');
               return resolve(persistentUri);
@@ -136,7 +135,6 @@ function uploadImage(buffer, originalname = 'logo.png', folder = 'nexo_radar/log
       uploadStream.on('error', (streamErr) => {
         console.error('[Cloudinary Stream Error]:', streamErr.message || streamErr);
         try {
-          saveToLocalFallback(buffer, originalname);
           const persistentUri = bufferToDataUri(buffer, originalname);
           resolve(persistentUri);
         } catch (localErr) {
@@ -149,35 +147,14 @@ function uploadImage(buffer, originalname = 'logo.png', folder = 'nexo_radar/log
     } else {
       console.warn('[Cloudinary Warning] Credenciales no detectadas. Guardando en base de datos como Data URI permanente.');
       try {
-        saveToLocalFallback(buffer, originalname);
+        const persistentUri = bufferToDataUri(buffer, originalname);
+        resolve(persistentUri);
       } catch (e) {
-        console.warn('[Local fallback disk warning]:', e.message);
+        console.error('[Data URI Conversion Error]:', e.message);
+        resolve(null);
       }
-      const persistentUri = bufferToDataUri(buffer, originalname);
-      resolve(persistentUri);
     }
   });
-}
-
-/**
- * Guardado local secundario para depuración / desarrollo en disco
- */
-function saveToLocalFallback(buffer, originalname) {
-  try {
-    const uploadsDir = path.join(__dirname, '..', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(originalname) || '.png';
-    const filename = `${uniqueSuffix}${ext}`;
-    const filepath = path.join(uploadsDir, filename);
-    fs.writeFileSync(filepath, buffer);
-    return `/uploads/${filename}`;
-  } catch (err) {
-    console.debug('[saveToLocalFallback debug]:', err.message);
-    return null;
-  }
 }
 
 module.exports = {

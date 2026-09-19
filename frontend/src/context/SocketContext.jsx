@@ -170,12 +170,19 @@ export function SocketProvider({ children }) {
     // Escuchar nuevas solicitudes emitidas desde cualquier QR
     newSocket.on('new_request', (data) => {
       console.log('[Socket.IO] ¡Nueva solicitud recibida en tiempo real!:', data);
-      setHasNewAlerts(true);
-      setNewAlertsCount(prev => prev + 1);
-      setLatestAlert(data);
-      setLastSyncTimestamp(Date.now());
-      playChime();
-      triggerPushNotification(data);
+      
+      const isClient = window.location.pathname.startsWith('/qr');
+      const hasAuth = !!localStorage.getItem('nexo_auth');
+      
+      // Solo actualizar estado visual, reproducir sonido y notificar si es administrador/colaborador
+      if (hasAuth && !isClient) {
+        setHasNewAlerts(true);
+        setNewAlertsCount(prev => prev + 1);
+        setLatestAlert(data);
+        setLastSyncTimestamp(Date.now());
+        playChime();
+        triggerPushNotification(data);
+      }
     });
 
     newSocket.on('request_updated', (updated) => {

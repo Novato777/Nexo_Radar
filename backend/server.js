@@ -44,7 +44,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Cache-Control', 'Pragma', 'Expires']
 };
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.options('(.*)', cors(corsOptions));
 
 // Límites de tamaño de payload para evitar saturación de memoria
 app.use(express.json({ limit: '50kb' }));
